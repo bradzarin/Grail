@@ -1,0 +1,52 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Grail Market Ticker</title>
+<style>
+:root{--ink:#18181b;--muted:#737373;--grid:#e8e8ed;--blue:#4e96f7;--vio:#7d3cff;--green:#16a66a}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1240px;margin:30px auto;padding:0 24px}h1{font-size:25px;margin:0}p{color:var(--muted);font-size:15px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:22px 0}
+.periods{display:flex;gap:6px}.periods button,.refresh{border:1px solid #dddfe5;background:#fff;border-radius:8px;padding:9px 13px;font-weight:700;font-size:12px;cursor:pointer}.periods button.active{background:var(--vio);color:#fff;border-color:var(--vio)}.refresh{background:#111;color:#fff;border-color:#111}
+.quote{display:flex;gap:15px;align-items:baseline;margin-bottom:8px}.quote b{font-size:34px}.quote span{color:var(--green);font-weight:800;font-size:13px}
+.chartbox{position:relative;border-top:1px solid #eee;padding-top:5px}.chart{width:100%;height:auto;display:block}.tip{position:absolute;display:none;background:white;border:1px solid #ddd;border-radius:10px;padding:10px 12px;box-shadow:0 10px 24px #0002;font-size:12px;pointer-events:none}.tip b{display:block;font-size:15px;margin-top:3px}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:1px solid #eee;border-bottom:1px solid #eee;margin-top:10px}.metric{padding:15px;border-right:1px solid #eee}.metric:last-child{border:0}.metric small{display:block;color:#888;font-size:9px}.metric b{display:block;margin-top:5px;font-size:18px}
+.status{margin-top:14px;padding:11px 13px;background:#faf9ff;border:1px solid #ede9ff;border-radius:9px;font-size:11px;color:#5f586f}.sources{margin-top:12px;font-size:10px;color:#888;line-height:1.6}
+@media(max-width:700px){.metrics{grid-template-columns:1fr 1fr}.metric{border-bottom:1px solid #eee}}
+</style></head><body><main>
+<h1>Michael Jordan 1993 Ultra Scoring Kings #5 — PSA 8</h1>
+<p>Completed public sales only. No interpolated monthly values.</p>
+<div class="toolbar"><div class="periods"><button data-days="30">30D</button><button data-days="90">90D</button><button data-days="365" class="active">1Y</button><button data-days="730">2Y</button></div><button class="refresh" id="refresh">CHECK FOR UPDATES</button></div>
+<div class="quote"><b id="last">$—</b><span id="change">—</span></div>
+<div class="chartbox"><svg class="chart" viewBox="0 0 1180 470"><g id="grid"></g><path id="line" fill="none" stroke="#4e96f7" stroke-width="3"></path><g id="dots"></g></svg><div class="tip" id="tip"></div></div>
+<div class="metrics"><div class="metric"><small>AVERAGE</small><b id="avg">—</b></div><div class="metric"><small>MEDIAN</small><b id="med">—</b></div><div class="metric"><small>SALES IN VIEW</small><b id="count">—</b></div><div class="metric"><small>HIGH</small><b id="high">—</b></div><div class="metric"><small>LOW</small><b id="low">—</b></div></div>
+<div class="status" id="status">Loading market data…</div>
+<div class="sources">Production source policy: official/licensed feeds where available; completed-sale public pages only where permitted. eBay Marketplace Insights is Limited Release. PSA Auction Prices Realized states it includes more than 5 million auction results and is updated daily. Every stored sale retains venue/source attribution and is de-duplicated.</div>
+<script>
+const CARD='mj-scoring-kings-5'; let days=365, full=[];
+const $=s=>document.querySelector(s), money=v=>'$'+Math.round(v).toLocaleString();
+function dateMs(s){return new Date(s+'T00:00:00Z').getTime()}
+function axisLabel(ms){let d=new Date(ms),o=days<=90?{month:'short',day:'numeric',timeZone:'UTC'}:{month:'short',year:'2-digit',timeZone:'UTC'};return d.toLocaleDateString('en-US',o)}
+function render(payload){
+ full=payload.sales||[];
+ const end=full.length?Math.max(...full.map(x=>dateMs(x.date))):Date.now(), start=end-days*86400000;
+ const rows=full.filter(x=>dateMs(x.date)>=start&&dateMs(x.date)<=end);
+ if(!rows.length){$('#status').textContent='No completed sales found in this period.';return}
+ const vals=rows.map(x=>x.price), W=1180,H=470,L=70,R=25,T=28,B=55, ymin=Math.max(0,Math.floor(Math.min(...vals)*.8/500)*500), ymax=Math.ceil(Math.max(...vals)*1.12/500)*500;
+ const X=x=>L+(W-L-R)*(x-start)/(end-start),Y=y=>T+(H-T-B)*(1-(y-ymin)/(ymax-ymin));
+ $('#grid').innerHTML='';
+ for(let i=0;i<5;i++){let y=T+(H-T-B)*i/4,v=ymax-(ymax-ymin)*i/4;$('#grid').innerHTML+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#e7e7eb" stroke-dasharray="5 5"/><text x="4" y="${y+5}" font-size="13" fill="#666">${money(v)}</text>`}
+ let tickCount=days<=30?5:days<=90?6:days<=365?7:9;
+ for(let i=0;i<tickCount;i++){let ms=start+(end-start)*i/(tickCount-1),x=X(ms),a=i===0?'start':i===tickCount-1?'end':'middle';$('#grid').innerHTML+=`<text x="${x}" y="${H-18}" text-anchor="${a}" font-size="13" fill="#666">${axisLabel(ms)}</text>`}
+ $('#line').setAttribute('d',rows.map((r,i)=>(i?'L':'M')+X(dateMs(r.date))+' '+Y(r.price)).join(' '));
+ $('#dots').innerHTML=rows.map((r,i)=>`<circle class="pt" data-i="${i}" cx="${X(dateMs(r.date))}" cy="${Y(r.price)}" r="5" fill="#4e96f7" stroke="#fff" stroke-width="2"/>`).join('');
+ const avg=vals.reduce((a,b)=>a+b,0)/vals.length, sorted=[...vals].sort((a,b)=>a-b), med=sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+ $('#last').textContent=money(vals.at(-1)); $('#avg').textContent=money(avg); $('#med').textContent=money(med); $('#count').textContent=rows.length; $('#high').textContent=money(Math.max(...vals)); $('#low').textContent=money(Math.min(...vals));
+ let ch=(vals.at(-1)/vals[0]-1)*100; $('#change').textContent=(ch>=0?'▲ ':'▼ ')+Math.abs(ch).toFixed(1)+'% · '+(days===30?'30D':days===90?'90D':days===365?'1Y':'2Y'); $('#change').style.color=ch>=0?'#16a66a':'#d64555';
+ document.querySelectorAll('.pt').forEach(el=>{el.addEventListener('mouseenter',()=>{let r=rows[+el.dataset.i],tip=$('#tip');tip.style.display='block';tip.innerHTML=`${new Date(r.date+'T00:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}<b>${money(r.price)}</b>${r.venue}`;tip.style.left=(+el.getAttribute('cx')+10)+'px';tip.style.top=(+el.getAttribute('cy')-10)+'px'});el.addEventListener('mouseleave',()=>$('#tip').style.display='none')})
+ $('#status').textContent=`${rows.length} completed sale${rows.length===1?'':'s'} shown. Last stored sale: ${rows.at(-1).date}.`;
+}
+async function load(){let r=await fetch(`/api/cards/${CARD}/trend`);render(await r.json())}
+async function refresh(){let b=$('#refresh');b.disabled=true;b.textContent='CHECKING…';try{let r=await fetch(`/api/cards/${CARD}/refresh`,{method:'POST'}),p=await r.json();render(p.trend);let ok=p.sources.filter(x=>x.status==='ok').map(x=>`${x.source}: ${x.inserted} new`).join(' · ');$('#status').textContent='Refresh complete. '+(ok||'No enabled source returned new rows.')}catch(e){$('#status').textContent='Refresh failed: '+e.message}finally{b.disabled=false;b.textContent='CHECK FOR UPDATES'}}
+document.querySelectorAll('.periods button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.periods button').forEach(x=>x.classList.remove('active'));b.classList.add('active');days=+b.dataset.days;render({sales:full})}));
+$('#refresh').addEventListener('click',refresh); load(); setInterval(load,60000);
+</script></main></body></html>

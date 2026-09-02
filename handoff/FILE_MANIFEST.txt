@@ -1,0 +1,42 @@
+THE GRAIL HANDOFF — FILE MANIFEST
+
+START HERE
+- HANDOFF.md — complete thesis, product strategy, UX, market/data rules, roadmap and technical direction.
+- CLAUDE_START_PROMPT.md — paste this into Claude at the start of the development thread.
+
+ASSETS
+- assets/the_grail_logo.png — current preferred logo.
+- assets/preferred_interface_reference.png — strongest overall UI/layout reference; treat as a design specification.
+- assets/market_trends_reference.png — market terminal/ticker reference.
+- assets/mj_scoring_kings_actual.png — actual Scoring Kings card reference.
+- assets/lamine_yamal_auto_298.jpg
+- assets/shaq_beam_team.jpg
+- assets/michael_jordan_fleer.jpg
+- assets/jude_bellingham_auto_25.jpg
+
+PROTOTYPES
+- prototypes/collector_home_v3.html — collection-first home concept.
+- prototypes/mj_scoring_kings_terminal.html — most important functional market-terminal example.
+- prototypes/clean_mockup_style.html — clean/light design exploration.
+- prototypes/partner_market_terminal_v2.html — partner-facing market terminal iteration.
+
+MARKET ENGINE
+- market_engine/grail_market_live/ — FastAPI + SQLite live-market scaffold, source adapters, refresh endpoint and front end.
+  Read its README first.
+
+PITCH
+- pitch/The_Grail_Pitch_Deck_Design_v1.pptx — 12-slide brand/product narrative and deck design system.
+
+MARKETPLACE / TRADE / AUCTION
+- MARKETPLACE_TRADE_AUCTION_SPEC.md — cornerstone marketplace vision, UX, transparency, auctions, trade state machine, Grail Rating and trust.
+- marketplace_code/domain.ts — TypeScript domain contracts.
+- marketplace_code/schema.sql — PostgreSQL marketplace schema sketch.
+- marketplace_code/api_contract.md — API surface starting point.
+
+ADDITIONAL VISUAL REFERENCES
+- assets/real_sales_chart_reference.png
+- assets/card_detail_reference.png
+- assets/card_detail_market_trend_reference.png
+- assets/full_dashboard_reference.png
+- assets/stock_chart_reference.png
+- assets/trade_table_mobile_reference.png
