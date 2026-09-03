@@ -41,7 +41,13 @@ Open `http://127.0.0.1:8000`.
   path for historically significant cards with too little market data to score on the
   composite alone (`docs/ARCHITECTURE.md` section J). Never fabricates a number when
   there are no sales. `grail_estimate()` takes an optional `as_of` so it can be replayed
-  at a past date — see `app/portfolio.py`.
+  at a past date — see `app/portfolio.py`. Also: `market_commentary()`, the card-page
+  write-up — every sentence is conditioned on a real number (spread vs. estimate, momentum,
+  sale count, confidence) or a curated tag, never a fixed template, so it reads differently
+  card to card instead of like filler text; and `liquidity_profile()`, which classifies a
+  card as Actively/Regularly/Thinly Traded or a Hold purely from its real 90D sale count —
+  a card can be valuable and still be a hold, and this makes that visible instead of
+  collapsing everything into one price.
 - `app/portfolio.py` — the portfolio-level lens on top of the same per-card estimate:
   `performance_series()` reconstructs total portfolio value over time by replaying
   `grail_estimate()` at each real sale date (not a fabricated trend line), `breakdown()`
@@ -51,11 +57,13 @@ Open `http://127.0.0.1:8000`.
   the rest of the app; it's the same estimate/momentum every card page already computes.
 - `static/` — the frontend: plain HTML + CSS + native ES modules, no build step (see
   "Why no framework" below). `js/components/CardPanel.js` is the shared card
-  hero+estimate+ticker used by the standalone Card Market Terminal.
-  `js/components/PortfolioChart.js` and `BreakdownWidget.js` render the portfolio graph
-  and sport/player breakdown on Home. `js/components/CardArt.js` generates every card
-  face (see "Card art" below) and is used everywhere a card renders — tiles, thumbnails,
-  hero.
+  hero+estimate+ticker used by the standalone Card Market Terminal, including the
+  commentary write-up and liquidity badge. `js/components/GrailRatingPanel.js` renders
+  the full 5-dimension G-rating breakdown (not just the pill) — same `rating.dimensions`
+  the API already returned, just made visible. `js/components/PortfolioChart.js` and
+  `BreakdownWidget.js` render the portfolio graph and sport/player breakdown on Home.
+  `js/components/CardArt.js` generates every card face (see "Card art" below) and is
+  used everywhere a card renders — tiles, thumbnails, hero.
 
 ## Card art
 

@@ -1,19 +1,10 @@
 import { CardArt } from "./CardArt.js";
-import { GBadge } from "./Badges.js";
+import { GBadge, LiquidityBadge } from "./Badges.js";
 import { GrailEstimatePanel } from "./GrailEstimatePanel.js";
+import { GrailRatingPanel } from "./GrailRatingPanel.js";
 import { MarketTicker } from "./MarketTicker.js";
 import { isWanted, toggleWant } from "../wants.js";
 import { showToast } from "../toast.js";
-
-function aboutText(card) {
-  const bits = [];
-  if (card.rookie) bits.push("rookie card");
-  if (card.autograph) bits.push("on-card autograph");
-  if (card.relic) bits.push("relic card");
-  const kind = bits.length ? bits.join(", ") : "card";
-  const serial = card.serial_number ? ` numbered ${card.serial_number}` : "";
-  return `The ${card.title} is a ${card.year} ${card.manufacturer} ${card.product} ${kind}${serial} from the ${card.set_name} ${card.parallel ? card.parallel + " " : ""}line, part of ${card.player}'s ${card.sport.toLowerCase()} catalog${card.team ? ` (${card.team})` : ""}.`;
-}
 
 function popStat(label, value) {
   const div = document.createElement("div");
@@ -52,6 +43,13 @@ export function CardPanel(card, trend, owned) {
     if (g) gSlot.appendChild(g);
   }
   renderGBadge(card.rating);
+  const liquiditySlot = document.createElement("span");
+  tagRow.appendChild(liquiditySlot);
+  function renderLiquidity(liquidity) {
+    liquiditySlot.innerHTML = "";
+    liquiditySlot.appendChild(LiquidityBadge(liquidity));
+  }
+  renderLiquidity(card.liquidity);
   const badgeSource = [card.rookie && "Rookie", card.autograph && "Auto", card.relic && "Relic", ...card.tags].filter(Boolean);
   badgeSource.forEach((t) => {
     const pill = document.createElement("span");
@@ -66,11 +64,16 @@ export function CardPanel(card, trend, owned) {
   left.appendChild(estimateSlot);
 
   // MarketTicker only calls this when the comp was entered at the card's
-  // canonical grade — the only case where the estimate/rating shown here changes.
+  // canonical grade — the only case where the estimate/rating/liquidity/
+  // commentary shown here changes.
   function onCompAdded(freshCard) {
     estimateSlot.innerHTML = "";
     estimateSlot.appendChild(GrailEstimatePanel(freshCard.estimate));
     renderGBadge(freshCard.rating);
+    renderLiquidity(freshCard.liquidity);
+    commentaryEl.textContent = freshCard.commentary;
+    ratingSlot.innerHTML = "";
+    ratingSlot.appendChild(GrailRatingPanel(freshCard.rating));
   }
 
   const actions = document.createElement("div");
@@ -114,7 +117,11 @@ export function CardPanel(card, trend, owned) {
   });
 
   const about = document.createElement("div");
-  about.innerHTML = `<h2 style="font-size:15px;margin:28px 0 8px">About This Card</h2><p style="font-size:13px;color:var(--ink-soft);line-height:1.6;margin:0">${aboutText(card)}</p>`;
+  about.innerHTML = `<h2 style="font-size:15px;margin:28px 0 8px">About This Card + What The Market Is Saying</h2>`;
+  const commentaryEl = document.createElement("p");
+  commentaryEl.style.cssText = "font-size:13px;color:var(--ink-soft);line-height:1.6;margin:0";
+  commentaryEl.textContent = card.commentary;
+  about.appendChild(commentaryEl);
   left.appendChild(about);
 
   const popRow = document.createElement("div");
@@ -131,5 +138,14 @@ export function CardPanel(card, trend, owned) {
 
   grid.appendChild(left);
   grid.appendChild(right);
-  return grid;
+
+  const wrapper = document.createElement("div");
+  wrapper.appendChild(grid);
+
+  const ratingSlot = document.createElement("div");
+  ratingSlot.style.marginTop = "32px";
+  ratingSlot.appendChild(GrailRatingPanel(card.rating));
+  wrapper.appendChild(ratingSlot);
+
+  return wrapper;
 }

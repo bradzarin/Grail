@@ -16,6 +16,14 @@ export function GBadge(rating) {
   return span;
 }
 
+export function LiquidityBadge(liquidity) {
+  const span = document.createElement("span");
+  span.className = `liquidity-badge liquidity-badge--${liquidity.tier}`;
+  span.title = liquidity.note;
+  span.textContent = liquidity.label;
+  return span;
+}
+
 export function ConfidencePill(confidence) {
   const span = document.createElement("span");
   span.className = `confidence-pill confidence-pill--${confidence}`;

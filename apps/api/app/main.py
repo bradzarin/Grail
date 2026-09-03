@@ -17,7 +17,7 @@ from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
 from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance
 from .portfolio import breakdown as portfolio_breakdown, discover_movers, performance_series
 from .service import refresh, trend
-from .valuation import grail_estimate, grail_rating
+from .valuation import grail_estimate, grail_rating, liquidity_profile, market_commentary
 
 load_dotenv()
 
@@ -118,6 +118,8 @@ def _card_summary(card):
     est = grail_estimate(sales_rows(card.card_id, card.grade))
     rating = grail_rating(card, est)
     return {
+        "commentary": market_commentary(card, est),
+        "liquidity": liquidity_profile(est),
         "card_id": card.card_id,
         "title": card.title,
         "player": card.player,

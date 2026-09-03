@@ -103,6 +103,111 @@ def grail_estimate(sales_rows: list[dict], as_of: datetime | None = None) -> dic
     }
 
 
+def liquidity_profile(estimate: dict) -> dict:
+    """How actively this card actually trades, not just what it's worth — a
+    "hold in the collection" card and an actively-traded one can carry the same
+    estimate but very different market character. Derived purely from real
+    90D sale count already computed above; never a separate guess."""
+    if estimate["insufficient_data"]:
+        return {"tier": "unknown", "label": "Unrated", "note": "No completed sales yet to characterize liquidity."}
+    n = estimate["sale_count_90d"]
+    if n >= 8:
+        tier, label = "high", "Actively Traded"
+    elif n >= 3:
+        tier, label = "medium", "Regularly Traded"
+    elif n >= 1:
+        tier, label = "low", "Thinly Traded"
+    else:
+        tier, label = "hold", "Hold — Infrequent Sales"
+    return {
+        "tier": tier,
+        "label": label,
+        "note": f"{n} sale{'s' if n != 1 else ''} in the last 90 days.",
+    }
+
+
+def _money(v: float) -> str:
+    return f"${v:,.0f}"
+
+
+def market_commentary(card, estimate: dict) -> str:
+    """The card-page write-up. Every sentence is conditioned on a real computed
+    number or a curated tag — never a fixed template that reads the same
+    regardless of the actual card and market. See handoff/HANDOFF.md section 6
+    ("no fake precision") — this extends that discipline to prose, not just
+    the headline number."""
+    kind_bits = [b for b, flag in (("rookie card", card.rookie), ("on-card autograph", card.autograph), ("relic card", card.relic)) if flag]
+    kind = ", ".join(kind_bits) if kind_bits else "card"
+    serial = f" numbered {card.serial_number}" if card.serial_number else ""
+    parallel = f"{card.parallel} " if card.parallel else ""
+    identity = (
+        f"The {card.title} is a {card.year} {card.manufacturer} {card.product} {kind}{serial} "
+        f"from the {card.set_name} {parallel}line."
+    )
+
+    if estimate["insufficient_data"]:
+        return (
+            f"{identity} No completed sales have been recorded yet at {card.grade}, so The Grail shows "
+            f"that plainly rather than guessing — log a comp you've found yourself, or check back as the "
+            f"market accumulates."
+        )
+
+    sentences = [identity]
+
+    spread_pct = (estimate["range_high"] - estimate["range_low"]) / estimate["estimate"] * 100 if estimate["estimate"] else None
+    condition_sensitive = "Condition Sensitive" in card.tags or (spread_pct is not None and spread_pct > 25)
+    if estimate["sale_count_total"] < 3:
+        # Too few sales for "tight" or "settled" to be an honest read of the
+        # market — the range here is mostly a statistical fallback (see
+        # grail_estimate's spread calc), not an observed spread. Say so.
+        sentences.append(
+            f"Only {estimate['sale_count_total']} completed sale{'s' if estimate['sale_count_total'] != 1 else ''} "
+            f"{'are' if estimate['sale_count_total'] != 1 else 'is'} on record at {card.grade}, so the range shown "
+            f"is a wider statistical estimate rather than a tightly observed spread — treat it as a starting point."
+        )
+    elif spread_pct is not None:
+        if condition_sensitive:
+            sentences.append(
+                f"Recent {card.grade} sales ranged from {_money(estimate['range_low'])} to "
+                f"{_money(estimate['range_high'])} — condition and eye appeal drive real price separation "
+                f"on this card, so the range matters as much as the midpoint."
+            )
+        else:
+            sentences.append(
+                f"Recent {card.grade} sales have clustered tightly ({_money(estimate['range_low'])}–"
+                f"{_money(estimate['range_high'])}), suggesting the market has largely settled on this "
+                f"card's value at this grade."
+            )
+
+    if estimate["momentum_pct"] is not None:
+        direction = "trending up" if estimate["momentum_pct"] >= 0 else "trending down"
+        if estimate["sale_count_90d"] > 0:
+            confidence_basis = (
+                f"{estimate['confidence'].lower()} confidence from {estimate['sale_count_90d']} sale"
+                f"{'s' if estimate['sale_count_90d'] != 1 else ''} in the last 90 days"
+            )
+        else:
+            confidence_basis = (
+                f"{estimate['confidence'].lower()} confidence from {estimate['sale_count_total']} sales on "
+                f"record, though none in the last 90 days"
+            )
+        sentences.append(
+            f"The {card.grade} market is {direction} {abs(estimate['momentum_pct'])}% across the sales on "
+            f"record, with {confidence_basis}."
+        )
+    else:
+        sentences.append(
+            f"There isn't enough sales volume yet to confirm a trend direction — "
+            f"{estimate['confidence'].lower()} confidence reflects that, not a hidden number."
+        )
+
+    sentences.append(
+        "The Grail shows a likely range and confidence level alongside the price history rather than "
+        "presenting one number as if it were exact."
+    )
+    return " ".join(sentences)
+
+
 def _value_score(price: float | None) -> float:
     if not price or price <= 0:
         return 0.0

@@ -69,7 +69,7 @@ Checking the actual repo against the full lifecycle, honestly:
 | **Track** | Built | Home portfolio value graph, Best Performing Cards, by-sport/by-player breakdown (`app/portfolio.py`) |
 | **Value** | Built | Grail Estimate/Rating (`valuation.py`), Market Trends ticker |
 | **Discover** | Built | Home "Discover" — real market movers (`GET /api/discover`), ranked by momentum and reasoned against the owned portfolio (same player/product/sport, or "in your collection"). Still catalog-only, not network/social discovery. |
-| **Analyze** | Partial | Grade tabs, confidence/range/market-read, portfolio breakdown by sport/player — no comps-table drill-down yet |
+| **Analyze** | Partial | Grade tabs, confidence/range, per-card market commentary (`valuation.market_commentary`, conditioned on real spread/momentum/sale-count — not a fixed template), liquidity classification (`valuation.liquidity_profile` — Actively Traded vs. Hold), full Grail Rating breakdown (5 scored dimensions, not just the pill), portfolio breakdown by sport/player — still no comps-table drill-down |
 | **Trade** | Preview | Trade Table is a real builder over real Collection data, but only against one sample opponent — not a live matched trade between two accounts |
 | **Buy / Sell** | Not built | Buttons present, intentionally inert — HANDOFF.md §17's build order defers commerce until Collection + Intelligence are excellent |
 | **Grade** | Not built | No Grade Assist / submission flow yet |

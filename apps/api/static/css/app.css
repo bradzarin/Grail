@@ -256,6 +256,111 @@ button.card-tile { font: inherit; padding: 0; width: 100%; }
   text-transform: uppercase;
 }
 
+.liquidity-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+.liquidity-badge--high { color: var(--up); border-color: var(--up); }
+.liquidity-badge--medium { color: var(--violet); border-color: var(--violet); }
+.liquidity-badge--low { color: var(--gold); border-color: #e6cd8f; }
+.liquidity-badge--hold,
+.liquidity-badge--unknown { color: var(--ink-faint); }
+
+/* Grail Rating panel */
+.rating-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  background: var(--canvas);
+}
+
+.rating-panel__intro {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0 0 20px;
+  max-width: 720px;
+}
+
+.rating-panel__body {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rating-tile {
+  flex-shrink: 0;
+  width: 110px;
+  height: 110px;
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--canvas), var(--canvas)) padding-box,
+    linear-gradient(135deg, var(--cyan), var(--violet), var(--magenta), var(--gold)) border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.rating-tile--unrated {
+  background:
+    linear-gradient(var(--canvas), var(--canvas)) padding-box,
+    linear-gradient(135deg, var(--border-strong), var(--border-strong)) border-box;
+}
+
+.rating-tile__letter { font-family: var(--font-display); font-size: 38px; font-weight: 700; line-height: 1; }
+.rating-tile--unrated .rating-tile__letter { color: var(--ink-faint); }
+.rating-tile__score { font-size: 12px; font-weight: 700; color: var(--gold); }
+.rating-tile--unrated .rating-tile__score { color: var(--ink-faint); }
+
+.rating-panel__dims { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 10px; }
+
+.rating-dim {
+  display: grid;
+  grid-template-columns: 96px 1fr 30px;
+  align-items: center;
+  gap: 12px;
+}
+
+.rating-dim__label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--ink-faint); }
+
+.rating-dim__track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--canvas-sunken);
+  overflow: hidden;
+}
+
+.rating-dim__bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+}
+
+.rating-dim__score { font-size: 12px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+
+.rating-panel__footnote {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 560px) {
+  .rating-dim { grid-template-columns: 78px 1fr 26px; gap: 8px; }
+}
+
 /* Card terminal */
 .terminal-grid {
   display: grid;
