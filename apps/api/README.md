@@ -71,8 +71,8 @@ Open `http://127.0.0.1:8000`.
 - `app/cardgen.py` — `slugify()`/`palette_for()`, the id-generation and deterministic
   generated-art color assignment shared by `POST /api/cards` and the bulk checklist
   loader, so both paths build a `CardSpec` the same way.
-- `app/checklist.py` + `app/data/*.json` — the 47,525-card bulk checklist registry
-  (3 sources so far, growing), kept separate from `CARDS` — see "Bulk checklist" below.
+- `app/checklist.py` + `app/data/*.json` — the 50,360-card bulk checklist registry
+  (5 sources so far, growing), kept separate from `CARDS` — see "Bulk checklist" below.
 
 ## Card art
 
@@ -106,7 +106,7 @@ only when the card is owned.
 GET  /api/cards                    CARD_MASTER catalog + current estimate/rating
 POST /api/cards                    create a new CARD_MASTER from real, user-supplied
                                     identity (see "Card catalog scope" below)
-GET  /api/checklist/search         search the 47,525-card bulk checklist registry
+GET  /api/checklist/search         search the 50,360-card bulk checklist registry
                                     (?q=, ?limit=) — see "Bulk checklist" below
 GET  /api/cards/{id}                one card
 GET  /api/cards/{id}/trend          transaction-level sales + rollup metrics
@@ -189,10 +189,10 @@ no population or sales data was fabricated to fill them out — they render
 with an unscored estimate and no comps until real sales are logged, same as
 any card added through the form.
 
-### Bulk checklist: 47,525 real cards across three sources
+### Bulk checklist: 50,360 real cards across five sources
 
 Beyond those five, `app/checklist.py` holds a much larger real index —
-currently three sources, registered in `SOURCES` (`app/checklist.py`):
+currently five sources, registered in `SOURCES` (`app/checklist.py`):
 
 1. **Every Topps Baseball base card, 1952–2016** (41,823 rows: card number,
    team, player) — `app/data/topps_baseball_1952_2016.json`. TCDB (the
@@ -210,11 +210,23 @@ currently three sources, registered in `SOURCES` (`app/checklist.py`):
 3. **2022-23 Topps UEFA Club Competitions Soccer, every card** (425 rows —
    base, inserts, autographs) — `app/data/topps_uefa_club_competitions_2022_23.json`,
    from Beckett News's own downloadable XLSX checklist, embedded free in
-   their article (beckett.com/news/2022-23-topps-uefa-club-collections).
-   Beckett publishes a checklist article like this, frequently with a
-   matching XLSX download, for most notable releases they cover, across
-   every sport, going back years — a real, large, free, structured source
-   this repo hadn't tapped until a user found one directly.
+   their article.
+4. **2025 Topps Chrome Football, every card** (1,926 rows across 37 real
+   subsets — base, rookies, seven autograph families, relics, dozens of named
+   inserts) — `app/data/topps_chrome_football_2025.json`, from a Beckett News
+   XLSX.
+5. **2025-26 O-Pee-Chee Hockey, every card** (909 rows across 17 real
+   subsets) — `app/data/opeechee_hockey_2025_26.json`, from a Beckett News
+   XLSX. First hockey coverage in this registry.
+
+Beckett publishes a checklist article like #3-#5, frequently with a matching
+free XLSX download, for most notable releases they cover, across every
+sport, going back years — a real, large, free, structured source this repo
+hadn't tapped until a user found one directly. #4 and #5 came from the same
+place, pulled directly rather than waiting for another one to be handed over
+— `app/data/` holds only the normalized checklist rows (year, card number,
+team, player, set name, rookie/autograph flags), never Beckett's own article
+text or the original downloaded files.
 
 A paid alternative also exists — SportsCardsPro/PriceCharting has a real
 multi-sport checklist + current-price API — but it needs a subscription and

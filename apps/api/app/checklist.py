@@ -40,8 +40,23 @@ Current sources:
   essentially every notable release they cover, across every sport, going
   back years. That's a real, large, systematically-structured, free source
   this repository hadn't tapped until a user found one directly and pointed
-  it out — see apps/api/README.md "Bulk checklist" for what else is now
-  worth pulling from the same place."""
+  it out.
+- topps_chrome_football_2025.json — every card in 2025 Topps Chrome Football
+  (1,926 rows across 37 real subsets: base, rookies, seven autograph
+  families, relics, and dozens of named insert sets), from Beckett News's
+  downloadable XLSX (beckett.com/news/2025-topps-chrome-football-cards).
+- opeechee_hockey_2025_26.json — every card in 2025-26 O-Pee-Chee Hockey
+  (909 rows across 17 real subsets: base, 4 Nations Face-Off, Marquee
+  Rookies, several photo-variation parallels, and named inserts), from
+  Beckett News's downloadable XLSX
+  (beckett.com/news/2025-26-o-pee-chee-hockey-cards). First hockey coverage
+  in this registry.
+
+Both of the last two follow the same per-sheet parsing pattern (a "N cards"
+line marks each real subset's start; app/data/ holds only the normalized
+{year, card_number, team, player, set_name, rookie, autograph} rows, not the
+original files or any of Beckett's own article text) — see apps/api/README.md
+"Bulk checklist" for what's worth pulling next from the same place."""
 
 from __future__ import annotations
 
@@ -77,6 +92,13 @@ SOURCES: tuple[BulkSource, ...] = (
         manufacturer="Topps",
         product="UEFA Club Competitions",
     ),
+    BulkSource(path="topps_chrome_football_2025.json", sport="Football", manufacturer="Topps", product="Chrome"),
+    BulkSource(
+        path="opeechee_hockey_2025_26.json",
+        sport="Hockey",
+        manufacturer="O-Pee-Chee",
+        product="O-Pee-Chee",
+    ),
 )
 
 
@@ -100,18 +122,19 @@ def _load() -> dict[str, CardSpec]:
             # (base, inserts, autographs, parallel tiers) needs each to look like a
             # distinct card in a grid, not the same color repeated.
             primary, secondary = palette_for(player, source.manufacturer, year, set_name, number)
-            # Some sources' set_name is already a fully-qualified descriptor (Panini's
-            # CARD SET column reads like "2025 Panini Court Kings Basketball - Flawless
-            # Focus" — year and manufacturer already in it); others' is a short subset
-            # label ("Ultimate Stage Autographs") that still needs year+manufacturer
-            # prepended. Detect which by whether set_name already starts with the year.
-            if set_name != "Base" and set_name.startswith(year):
-                descriptor = set_name
-            else:
-                bits = [year, source.manufacturer]
-                if set_name != "Base":
-                    bits.append(set_name)
-                descriptor = " ".join(bits)
+            # Some sources' set_name already spells out the year and/or manufacturer
+            # (Panini's CARD SET column reads like "2025 Panini Court Kings Basketball
+            # - Flawless Focus"; O-Pee-Chee's insert names repeat the brand, e.g.
+            # "O-Pee-Chee Premier") — only prepend whichever of year/manufacturer isn't
+            # already in there, so titles don't duplicate either.
+            bits = []
+            if set_name == "Base" or not set_name.startswith(year):
+                bits.append(year)
+            if set_name == "Base" or source.manufacturer.lower() not in set_name.lower():
+                bits.append(source.manufacturer)
+            if set_name != "Base":
+                bits.append(set_name)
+            descriptor = " ".join(bits)
             print_run = row.get("print_run")
             out[card_id] = CardSpec(
                 card_id=card_id,
