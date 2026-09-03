@@ -25,7 +25,23 @@ Current sources:
   access is why this doesn't scrape TCDB instead, despite TCDB having the
   broadest real coverage of any single site). Spot-checked against PSA's
   public Auction Prices Realized search before import (1952 #1 Andy Pafko,
-  #311 Mickey Mantle, #407 Ed Mathews all matched exactly)."""
+  #311 Mickey Mantle, #407 Ed Mathews all matched exactly).
+- panini_origins_basketball_2025_26.json — every card (base, inserts,
+  parallels, autos) in 2025-26 Panini Origins Basketball, 5,277 rows including
+  print runs, straight from Panini's own downloadable checklist CSV for the
+  product (they publish one of these per release — confirms Panini does
+  provide free structured checklists directly, just per-product rather than
+  as a historical bulk archive).
+- topps_uefa_club_competitions_2022_23.json — every card in 2022-23 Topps
+  UEFA Club Competitions Soccer (425 rows: base, inserts, autographs), from
+  Beckett News's own downloadable XLSX checklist embedded in their free
+  article (beckett.com/news/2022-23-topps-uefa-club-collections) — Beckett
+  publishes one of these, often with a matching XLSX download, for
+  essentially every notable release they cover, across every sport, going
+  back years. That's a real, large, systematically-structured, free source
+  this repository hadn't tapped until a user found one directly and pointed
+  it out — see apps/api/README.md "Bulk checklist" for what else is now
+  worth pulling from the same place."""
 
 from __future__ import annotations
 
@@ -49,6 +65,18 @@ class BulkSource:
 
 SOURCES: tuple[BulkSource, ...] = (
     BulkSource(path="topps_baseball_1952_2016.json", sport="Baseball", manufacturer="Topps", product="Topps"),
+    BulkSource(
+        path="panini_origins_basketball_2025_26.json",
+        sport="Basketball",
+        manufacturer="Panini",
+        product="Origins (25-26)",
+    ),
+    BulkSource(
+        path="topps_uefa_club_competitions_2022_23.json",
+        sport="Soccer",
+        manufacturer="Topps",
+        product="UEFA Club Competitions",
+    ),
 )
 
 
@@ -60,22 +88,32 @@ def _load() -> dict[str, CardSpec]:
             year, number = row["year"], row["card_number"]
             team, player = row.get("team"), row["player"]
             set_name = row.get("set_name") or "Base"
-            # set_name only enters the id for a non-base source (e.g. a future insert-set
-            # archive) — keeps existing base-set ids stable as more sources are added.
+            # set_name only enters the id for a non-base source (e.g. an insert-set
+            # row) — keeps existing base-set ids stable as more sources are added.
             slug_parts = [player, year, source.manufacturer]
             if set_name != "Base":
                 slug_parts.append(set_name)
             slug_parts.append(number)
             card_id = slugify(*slug_parts)
             primary, secondary = palette_for(player, source.manufacturer, year)
-            title_bits = [year, source.manufacturer]
-            if set_name != "Base":
-                title_bits.append(set_name)
+            # Some sources' set_name is already a fully-qualified descriptor (Panini's
+            # CARD SET column reads like "2025 Panini Court Kings Basketball - Flawless
+            # Focus" — year and manufacturer already in it); others' is a short subset
+            # label ("Ultimate Stage Autographs") that still needs year+manufacturer
+            # prepended. Detect which by whether set_name already starts with the year.
+            if set_name != "Base" and set_name.startswith(year):
+                descriptor = set_name
+            else:
+                bits = [year, source.manufacturer]
+                if set_name != "Base":
+                    bits.append(set_name)
+                descriptor = " ".join(bits)
+            print_run = row.get("print_run")
             out[card_id] = CardSpec(
                 card_id=card_id,
                 query=f'"{year} {source.manufacturer}" "{player}" #{number}',
                 grade="Raw",
-                title=f"{player} {' '.join(title_bits)} #{number}",
+                title=f"{player} {descriptor} #{number}",
                 sport=source.sport,
                 year=year,
                 manufacturer=source.manufacturer,
@@ -84,6 +122,10 @@ def _load() -> dict[str, CardSpec]:
                 player=player,
                 team=team,
                 card_number=number,
+                serial_number=f"/{print_run}" if print_run else None,
+                print_run=print_run,
+                rookie=bool(row.get("rookie")),
+                autograph=bool(row.get("autograph")),
                 primary_color=primary,
                 secondary_color=secondary,
                 significance_score=50,

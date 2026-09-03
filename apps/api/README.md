@@ -71,8 +71,8 @@ Open `http://127.0.0.1:8000`.
 - `app/cardgen.py` — `slugify()`/`palette_for()`, the id-generation and deterministic
   generated-art color assignment shared by `POST /api/cards` and the bulk checklist
   loader, so both paths build a `CardSpec` the same way.
-- `app/checklist.py` + `app/data/topps_baseball_1952_2016.json` — the 41,823-card bulk
-  Topps Baseball index, kept separate from `CARDS` — see "Bulk checklist" below.
+- `app/checklist.py` + `app/data/*.json` — the 47,525-card bulk checklist registry
+  (3 sources so far, growing), kept separate from `CARDS` — see "Bulk checklist" below.
 
 ## Card art
 
@@ -106,7 +106,7 @@ only when the card is owned.
 GET  /api/cards                    CARD_MASTER catalog + current estimate/rating
 POST /api/cards                    create a new CARD_MASTER from real, user-supplied
                                     identity (see "Card catalog scope" below)
-GET  /api/checklist/search         search the 41,823-card bulk Topps Baseball index
+GET  /api/checklist/search         search the 47,525-card bulk checklist registry
                                     (?q=, ?limit=) — see "Bulk checklist" below
 GET  /api/cards/{id}                one card
 GET  /api/cards/{id}/trend          transaction-level sales + rollup metrics
@@ -189,32 +189,47 @@ no population or sales data was fabricated to fill them out — they render
 with an unscored estimate and no comps until real sales are logged, same as
 any card added through the form.
 
-### Bulk checklist: 41,823 real Topps Baseball cards, 1952–2016
+### Bulk checklist: 47,525 real cards across three sources
 
-Beyond those five, `app/checklist.py` holds a much larger real index — every
-Topps Baseball base card from 1952 through 2016 (41,823 rows: card number,
-team, player), sourced from `app/data/topps_baseball_1952_2016.json`.
+Beyond those five, `app/checklist.py` holds a much larger real index —
+currently three sources, registered in `SOURCES` (`app/checklist.py`):
 
-Provenance: TCDB (the largest community checklist site) has no official
-export — its own forum says so directly when someone asks for exactly this
-("Exportable Complete Checklists" thread) — but a reply in that same thread
-points to a community-maintained archive
-(`thirdring.net/download/topps_*.zip`) with real, structured Topps Baseball
-checklists per year. Downloaded, parsed, and spot-checked against PSA's
-public Auction Prices Realized search before import (1952 #1 Andy Pafko,
-#311 Mickey Mantle, #407 Ed Mathews all matched exactly). A paid alternative
-exists too — SportsCardsPro/PriceCharting has a real multi-sport checklist +
-pricing API — but it needs a subscription and personal API token, so it isn't
-wired in here.
+1. **Every Topps Baseball base card, 1952–2016** (41,823 rows: card number,
+   team, player) — `app/data/topps_baseball_1952_2016.json`. TCDB (the
+   largest community checklist site) has no official export — its own forum
+   says so directly when someone asks for exactly this ("Exportable Complete
+   Checklists" thread) — but a reply in that same thread points to a
+   community-maintained archive (`thirdring.net/download/topps_*.zip`) with
+   real, structured checklists per year. Spot-checked against PSA's public
+   Auction Prices Realized search before import (1952 #1 Andy Pafko, #311
+   Mickey Mantle, #407 Ed Mathews all matched exactly).
+2. **2025-26 Panini Origins Basketball, every card** (5,277 rows — base,
+   parallels, inserts, autos, print runs) — `app/data/panini_origins_basketball_2025_26.json`,
+   from Panini's own downloadable checklist CSV for the product. Panini
+   posts one of these per release; it just isn't a historical bulk archive.
+3. **2022-23 Topps UEFA Club Competitions Soccer, every card** (425 rows —
+   base, inserts, autographs) — `app/data/topps_uefa_club_competitions_2022_23.json`,
+   from Beckett News's own downloadable XLSX checklist, embedded free in
+   their article (beckett.com/news/2022-23-topps-uefa-club-collections).
+   Beckett publishes a checklist article like this, frequently with a
+   matching XLSX download, for most notable releases they cover, across
+   every sport, going back years — a real, large, free, structured source
+   this repo hadn't tapped until a user found one directly.
+
+A paid alternative also exists — SportsCardsPro/PriceCharting has a real
+multi-sport checklist + current-price API — but it needs a subscription and
+personal API token (and its API/CSV only cover current values, not
+transaction-level sales history, so it wouldn't feed the valuation engine
+below even once subscribed), so it isn't wired in here.
 
 This stays deliberately **out** of `CARDS`: `main.py`'s startup/periodic
 refresh loop calls the source adapters on every `CARDS` entry, and
 Discover/Market/Grails/Suggested Pickups all iterate `CARDS.values()` eagerly
-— merging ~42,000 unrated commons in there would slow every one of those down
-and bury real signal in noise. Instead:
+— merging tens of thousands of unrated commons in there would slow every one
+of those down and bury real signal in noise. Instead:
 
 - `GET /api/checklist/search?q=...` searches this index directly (a linear
-  scan over ~42k in-memory records — a few milliseconds, no index needed at
+  scan over the in-memory records — a few milliseconds, no index needed at
   this size) and excludes anything already hand-curated in `CARDS`, so e.g.
   the researched 1952 Mantle doesn't also show up as an unrated duplicate.
   The Market page (`js/pages/market.js`) calls this alongside `GET /api/market`
@@ -226,9 +241,8 @@ and bury real signal in noise. Instead:
   entered by hand through `POST /api/cards`. Nothing is promoted just by
   existing in the index — only by a real user action touching that card.
 
-Baseball/Topps only right now, and 2016 is where this one archive ends. Real
-free bulk coverage for other sports and manufacturers doesn't exist yet —
-checked directly and ruled out, not just unsearched:
+Three sources, two products fully covered — nowhere near everything. Some
+gaps were checked directly and ruled out, not just unsearched:
 
 - **TCDB** has the broadest real coverage of any single site (all sports, all
   eras, inserts/parallels/autos) but explicitly declined bulk export when
@@ -239,19 +253,30 @@ checked directly and ruled out, not just unsearched:
   bot-detection (confirmed by hitting the challenge page directly) — blocked
   for automated access regardless of who's asking, and current-releases-only
   even if it weren't.
-- **Panini** posts an Excel checklist per product around release — same
-  limitation: one file, current year, no historical archive.
 - **SportsCardsPro/PriceCharting** ($49/mo Legendary tier) is real and
   broader — confirmed variant-level 1952 Topps coverage (639 tracked items,
-  not just the 407 base cards) — but it's paid and bundles in pricing, which
-  this build is deliberately sequencing after checklist coverage.
+  not just the 407 base cards) — but it's paid, per-set for bulk (a CSV per
+  set page, rate-limited to one every 10 minutes — not a single "everything"
+  download), and its API/CSV only cover current values, not sales history.
 
-`SOURCES` in `app/checklist.py` is a registry, not a single hardcoded path,
-specifically so the next real archive that turns up (another sport, another
-manufacturer) is a one-line addition — normalize it into the same
-`{year, card_number, team, player, set_name?}` row shape, drop the JSON in
-`app/data/`, add a `BulkSource` entry. `POST /api/cards` remains the fallback
-for anything without a bulk source, same as always.
+**Panini and Beckett News are real, confirmed, and not exhausted yet.**
+Panini posts a downloadable checklist CSV per product at release — source #2
+above came straight from one. Beckett News goes further: they publish a
+checklist article, often with a matching XLSX download, for most releases
+they cover, across every sport, with a dedicated "Checklists" category per
+sport going back years — source #3 above is one single article out of what's
+likely thousands. Both are per-product, not one historical archive like the
+Topps Baseball source, so growing coverage here means pulling more of them
+one product at a time — real work, but real and free every time, and exactly
+what `SOURCES` (`app/checklist.py`) is built to keep absorbing.
+
+`SOURCES` is a registry, not a single hardcoded path, specifically so the
+next real archive that turns up (another product, another sport) is a
+one-line addition — normalize it into the same
+`{year, card_number, team, player, set_name?, rookie?, autograph?, print_run?}`
+row shape, drop the JSON in `app/data/`, add a `BulkSource` entry. `POST
+/api/cards` remains the fallback for anything without a bulk source, same as
+always.
 
 ## Asset versioning
 

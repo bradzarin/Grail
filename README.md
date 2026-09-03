@@ -54,12 +54,16 @@ pickups, a Trade Table demo). What's still a preview rather than a finished feat
   carries 5 real 1952 Topps/Bowman entries (Mantle, Robinson, Mathews, Pafko) looked up
   the same way, by hand, via PSA's public checklist search — proof this reaches back to
   the 1950s with real identities, not just modern cards. Beyond those, a separate real
-  bulk index (`app/checklist.py`) covers 41,823 real Topps Baseball cards, 1952–2016,
-  sourced from a community-maintained checklist archive and spot-checked against PSA —
-  searchable from Market, and promoted into the tracked catalog the moment one is opened
-  or added to a collection (see `apps/api/README.md` "Bulk checklist"). Not every sport
-  and manufacturer has an equivalent free bulk source yet — that's still `POST /api/cards`
-  card-by-card until one turns up. Every number shown stays honestly computed from what's
+  bulk registry (`app/checklist.py`) covers 47,525 real cards across three sources —
+  every Topps Baseball card 1952–2016 (community archive, spot-checked against PSA),
+  the full 2025-26 Panini Origins Basketball checklist (Panini's own downloadable CSV,
+  every parallel/insert/auto), and 2022-23 Topps UEFA Club Competitions Soccer (from a
+  free Beckett News checklist download) — searchable from Market, and promoted into the
+  tracked catalog the moment one is opened or added to a collection (see
+  `apps/api/README.md` "Bulk checklist"). Panini and Beckett News both publish real
+  checklists like this per product, so growing this further is pulling more of them
+  one at a time, not waiting on a new kind of source. Every number shown stays honestly
+  computed from what's
   actually there, never padded to look fuller (see
   `docs/ARCHITECTURE.md` section E and the "no fake precision" principle in
   `handoff/HANDOFF.md` §6) — a newly added card starts with no sales, not a guess.

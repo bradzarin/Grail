@@ -19,8 +19,8 @@ function matches(card, query) {
 }
 
 // The tracked catalog (CARDS) is small and rated; the bulk checklist
-// (app/checklist.py — 41,823 real Topps Baseball cards, 1952-2016) is real
-// identity data with no rating/sales yet, searched separately so an empty or
+// (app/checklist.py — a growing multi-source registry of real card
+// identities with no rating/sales yet) is searched separately so an empty or
 // generic query never dumps the whole archive into the grid. See
 // apps/api/README.md "Card catalog scope".
 async function loadCombined() {
@@ -43,14 +43,14 @@ async function main() {
         note.className = "market-read";
         note.style.marginBottom = "16px";
         note.textContent = `Showing ${total} result${total === 1 ? "" : "s"} for "${q}"${
-          checklist.length ? ` (${checklist.length} from the 1952–2016 Topps Baseball archive)` : ""
+          checklist.length ? ` (${checklist.length} from the bulk checklist archive)` : ""
         }.`;
         el.appendChild(note);
       } else {
         const note = document.createElement("div");
         note.className = "market-read";
         note.style.marginBottom = "16px";
-        note.textContent = `41,823 more Topps Baseball cards (1952–2016) are searchable — try a player name above.`;
+        note.textContent = `Tens of thousands more real cards (Topps Baseball 1952–2016, Panini and Topps insert/parallel checklists, and more) are searchable — try a player name above.`;
         el.appendChild(note);
       }
       el.appendChild(
