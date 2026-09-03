@@ -170,6 +170,52 @@ SOURCES: tuple[BulkSource, ...] = (
 )
 
 
+# Editorial significance overrides for real, genuinely notable cards pulled from
+# the bulk registry — the same override path valuation.grail_rating() already uses
+# for hand-curated CARDS entries (EDITORIAL_OVERRIDE_THRESHOLD = 90): a card can
+# earn Grail status on significance alone even with no sales logged yet, capped at
+# ELITE rather than the market-driven GRAIL band. This is not fabricated market
+# data — these cards still show "Estimate unavailable" until real sales exist —
+# it's an editorial judgment that the identity itself matters, the same judgment
+# every hand-curated CARDS entry already carries via significance_score.
+SIGNIFICANCE_OVERRIDES: dict[str, int] = {
+    "willie-mays-1957-topps-10": 96,
+    "hank-aaron-1957-topps-20": 96,
+    "sandy-koufax-1962-topps-5": 93,
+    "roberto-clemente-1962-topps-10": 94,
+    "babe-ruth-special-6-gehrig-and-ruth-1962-topps-140": 97,
+    "mike-trout-2012-topps-446": 95,
+    "shohei-ohtani-2025-bowman-prime-choice-signatures-pcs-so": 95,
+    "ted-williams-1954-topps-1": 96,
+    "vladimir-guerrero-1997-topps-433": 91,
+    "cooper-flagg-2025-26-topps-chrome-rookie-autographs-tcar-cf": 92,
+    "lebron-james-2025-26-topps-chrome-autographs-tca-lbj": 96,
+    "victor-wembanyama-2025-26-topps-chrome-autographs-tca-vw": 93,
+    "stephen-curry-2025-26-topps-chrome-autographs-tca-sc": 95,
+    "cristiano-ronaldo-2022-23-topps-base-autographs-a-cr": 95,
+    "kylian-mbappe-2023-24-panini-beautiful-game-autographs-gold-checklist-18": 92,
+    "diego-maradona-2023-24-panini-kaboom-checklist-24": 94,
+    "erling-haaland-2022-23-topps-base-autographs-a-eh": 90,
+    "neymar-jr-2022-23-topps-base-autographs-a-n": 90,
+    "patrick-mahomes-ii-2025-topps-power-players-pp-6": 94,
+    "marvin-harrison-jr-2025-topps-chrome-autographs-ba-mh": 90,
+    "caleb-williams-2025-topps-chrome-autographs-ba-cw": 90,
+    "travis-kelce-2025-topps-base-set-150": 90,
+    "justin-jefferson-2025-topps-base-set-195": 90,
+    "connor-mcdavid-2025-26-o-pee-chee-o-pee-chee-premier-p-7": 95,
+    "sidney-crosby-2025-26-o-pee-chee-o-pee-chee-premier-p-40": 94,
+    "auston-matthews-2025-26-o-pee-chee-base-set-15": 90,
+    "tiger-woods-2024-upper-deck-ud-canvas-signatures-checklist-cs-1": 96,
+    "dale-earnhardt-jr-2025-panini-patented-penmanship-autographs-2": 90,
+    "jeff-gordon-2025-panini-cup-champions-signatures-9": 91,
+    "kyle-larson-2025-panini-cup-champions-signatures-3": 90,
+    "roman-reigns-2023-panini-autographed-memorabilia-checklist-10": 92,
+    "john-cena-2023-panini-legendary-signatures-checklist-16": 93,
+    "undertaker-2023-panini-legendary-signatures-checklist-14": 92,
+    "becky-lynch-2023-panini-base-set-76": 90,
+}
+
+
 def _load() -> dict[str, CardSpec]:
     out: dict[str, CardSpec] = {}
     for source in SOURCES:
@@ -204,6 +250,10 @@ def _load() -> dict[str, CardSpec]:
                 bits.append(set_name)
             descriptor = " ".join(bits)
             print_run = row.get("print_run")
+            significance = SIGNIFICANCE_OVERRIDES.get(card_id, 50)
+            tags = ("Vintage",) if year.isdigit() and int(year) < 1980 else ()
+            if card_id in SIGNIFICANCE_OVERRIDES:
+                tags = tags + ("Notable",)
             out[card_id] = CardSpec(
                 card_id=card_id,
                 query=f'"{year} {source.manufacturer}" "{player}" #{number}',
@@ -223,10 +273,10 @@ def _load() -> dict[str, CardSpec]:
                 autograph=bool(row.get("autograph")),
                 primary_color=primary,
                 secondary_color=secondary,
-                significance_score=50,
+                significance_score=significance,
                 significance_source="editorial",
                 released=year,
-                tags=("Vintage",) if year.isdigit() and int(year) < 1980 else (),
+                tags=tags,
             )
     return out
 

@@ -26,7 +26,19 @@ Open `http://127.0.0.1:8000`.
   "Card catalog scope" below), the demo user's owned copies (`COLLECTION`), and a
   sample second collector's inventory (`OPPONENT_COLLECTION`, Trade Table demo only).
   Each card carries `primary_color`/`secondary_color`/`jersey_number` — inputs to the
-  generated card art, not photo metadata (see "Card art" below).
+  generated card art, not photo metadata (see "Card art" below). `main.py`'s
+  `_seed_demo_collection()` adds 245 more real owned instances on top of those 5
+  (250 total) from `app/data/demo_collection_seed.json` — real cards sampled from
+  the bulk checklist registry, proportionally across all 8 sports, so Home/Collection
+  demo with a portfolio-sized sample instead of 5 cards. 34 of them are tagged in
+  `app/checklist.py`'s `SIGNIFICANCE_OVERRIDES` (real, notable players — legends,
+  current stars, real rookie/autograph cards where available) with a significance
+  score above `valuation.EDITORIAL_OVERRIDE_THRESHOLD`, so they earn a real G Score
+  band through the same editorial-override path every hand-curated CARDS entry
+  already uses — not fabricated sales, just editorial judgment that the identity
+  matters, exactly like the 1952 Topps Mantle. Runs once at import time (not inside
+  `lifespan`) specifically so it completes before `_next_instance_num` derives its
+  starting count from `len(COLLECTION)`.
 - `app/db.py` — SQLite transaction store (`sales`, `refresh_log`); fixed a schema bug
   from the scaffold (see `docs/ARCHITECTURE.md` section E).
 - `app/service.py` — source-adapter orchestration (`refresh`) and rollup (`trend`,

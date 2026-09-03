@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import json
 import os
 import time
 from contextlib import asynccontextmanager
@@ -413,6 +414,41 @@ def add_comp(card_id: str, body: AddCompRequest):
         "card": _card_summary(card),
     }
 
+
+def _seed_demo_collection():
+    """Loads app/data/demo_collection_seed.json (250 real cards — 34 chosen
+    for checklist.py's SIGNIFICANCE_OVERRIDES, 216 sampled proportionally
+    across all 8 sports in the bulk registry) into COLLECTION at import time,
+    before _next_instance_num below is derived from len(COLLECTION) — so the
+    instance-id counter and this seed never collide. Runs once per process
+    start; COLLECTION is in-memory only, same as every other demo/seed state
+    in this file, so this keeps the larger sample from vanishing on restart
+    without hardcoding 250 CardInstance literals into models.py."""
+    seed_path = Path(__file__).resolve().parent / "data" / "demo_collection_seed.json"
+    if not seed_path.exists():
+        return
+    rows = json.loads(seed_path.read_text())
+    existing_ids = {inst.card_id for inst in COLLECTION}
+    for i, row in enumerate(rows):
+        if row["card_id"] in existing_ids:
+            continue
+        try:
+            card = _card_or_404(row["card_id"])
+        except HTTPException:
+            continue  # a seed row referencing a card_id that no longer resolves — skip, don't crash startup
+        COLLECTION.append(
+            CardInstance(
+                instance_id=f"seed-{i + 1}",
+                card_id=card.card_id,
+                grade=row["grade"],
+                acquired_price=row["acquired_price"],
+                acquired_date=row["acquired_date"],
+                status=row["status"],
+            )
+        )
+
+
+_seed_demo_collection()
 
 _next_instance_num = itertools.count(len(COLLECTION) + 1)
 
