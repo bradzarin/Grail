@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from .cardgen import palette_for, slugify
 from .checklist import BULK_CARDS, search_bulk
 from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
+from .grail_index import grail_index as compute_grail_index
 from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance, CardSpec
 from .portfolio import breakdown as portfolio_breakdown, discover_movers, performance_series
 from .service import refresh, trend
@@ -517,6 +518,14 @@ def get_collection_breakdown(by: str = "sport"):
     if by not in ("sport", "player"):
         raise HTTPException(422, "by must be 'sport' or 'player'")
     return portfolio_breakdown(get_collection(), by)
+
+
+@app.get("/api/collection/grail-index")
+def get_grail_index():
+    """The Grail Index — portfolio-level score, distinct from any single
+    card's G Score. See app/grail_index.py for the five dimensions and why
+    each is computed the way it is."""
+    return compute_grail_index(get_collection(), CARDS, BULK_CARDS)
 
 
 @app.get("/api/discover")

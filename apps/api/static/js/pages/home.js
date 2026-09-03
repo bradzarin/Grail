@@ -4,6 +4,7 @@ import { CollectionGrid } from "../components/CollectionGrid.js";
 import { GrailsWidget, SuggestedPickupsWidget, PerformerStrip, DiscoverStrip } from "../components/Widgets.js";
 import { PortfolioChart } from "../components/PortfolioChart.js";
 import { BreakdownWidget } from "../components/BreakdownWidget.js";
+import { GrailIndexPanel } from "../components/GrailIndexPanel.js";
 import { LoadingState, ErrorState } from "../components/States.js";
 import { money } from "../format.js";
 
@@ -46,6 +47,7 @@ async function main() {
   const heroEl = document.getElementById("hero");
   const chartEl = document.getElementById("portfolio-chart");
   const summaryEl = document.getElementById("summary");
+  const grailIndexEl = document.getElementById("grail-index");
   const performersEl = document.getElementById("performers");
   const breakdownEl = document.getElementById("breakdown");
   const discoverEl = document.getElementById("discover");
@@ -55,19 +57,21 @@ async function main() {
   heroEl.appendChild(LoadingState("Loading your dashboard…"));
 
   try {
-    const [collection, summary, performance, discover, grails, pickups] = await Promise.all([
+    const [collection, summary, performance, discover, grails, pickups, grailIndex] = await Promise.all([
       api.getCollection(),
       api.getCollectionSummary(),
       api.getCollectionPerformance(),
       api.getDiscover(),
       api.getGrails(),
       api.getSuggestedPickups(),
+      api.getGrailIndex(),
     ]);
 
     heroEl.innerHTML = "";
     heroEl.appendChild(Hero(summary));
     chartEl.appendChild(PortfolioChart(performance));
     summaryEl.appendChild(SummaryStrip(summary));
+    grailIndexEl.appendChild(GrailIndexPanel(grailIndex));
     performersEl.appendChild(PerformerStrip(collection));
     breakdownEl.appendChild(BreakdownWidget());
     discoverEl.appendChild(DiscoverStrip(discover));

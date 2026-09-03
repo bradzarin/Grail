@@ -28,6 +28,7 @@ export const api = {
   getCollectionSummary: () => request("/collection/summary"),
   getCollectionPerformance: () => request("/collection/performance"),
   getCollectionBreakdown: (by) => request(`/collection/breakdown?by=${encodeURIComponent(by)}`),
+  getGrailIndex: () => request("/collection/grail-index"),
   getDiscover: () => request("/discover"),
   getMarket: () => request("/market"),
   searchChecklist: (q) => request(`/checklist/search?q=${encodeURIComponent(q)}`),
