@@ -21,11 +21,12 @@ Open `http://127.0.0.1:8000`.
 
 ## Layout
 
-- `app/models.py` — CARD_MASTER catalog (`CARDS`, 8 demo cards across basketball/
-  soccer/baseball), the demo user's owned copies (`COLLECTION`), and a sample second
-  collector's inventory (`OPPONENT_COLLECTION`, Trade Table demo only). Each card
-  carries `primary_color`/`secondary_color`/`jersey_number` — inputs to the generated
-  card art, not photo metadata (see "Card art" below).
+- `app/models.py` — CARD_MASTER catalog (`CARDS`, 8 modern demo cards across
+  basketball/soccer/baseball plus 5 real 1952 Topps/Bowman checklist entries — see
+  "Card catalog scope" below), the demo user's owned copies (`COLLECTION`), and a
+  sample second collector's inventory (`OPPONENT_COLLECTION`, Trade Table demo only).
+  Each card carries `primary_color`/`secondary_color`/`jersey_number` — inputs to the
+  generated card art, not photo metadata (see "Card art" below).
 - `app/db.py` — SQLite transaction store (`sales`, `refresh_log`); fixed a schema bug
   from the scaffold (see `docs/ARCHITECTURE.md` section E).
 - `app/service.py` — source-adapter orchestration (`refresh`) and rollup (`trend`,
@@ -168,6 +169,22 @@ searchable from Market — not a second-tier record. `js/components/AddCardForm.
 is the UI (Market page); `js/components/CardPanel.js`'s "Add to Collection"
 form is the matching real add-to-`CARD_INSTANCE` path for any card, owned or
 not, with the same full grade list.
+
+`app/models.py`'s `CARDS` now also carries five real 1952 checklist entries —
+Mickey Mantle 1952 Topps #311, Mickey Mantle 1952 Bowman #101, Jackie Robinson
+1952 Topps #312, Eddie Mathews 1952 Topps #407 (his rookie, the last card in
+the set), and Andy Pafko 1952 Topps #1 (the set's opening card) — looked up by
+hand via PSA's public Auction Prices Realized search
+(`psacard.com/auctionprices/search?q=...`, no login required), which also
+confirmed the real ordered start of the 1952 Topps checklist (#1–#15) card by
+card. Proof that "any sport, any era, back to the 1950s" isn't only reachable
+through the manual Add-a-Card form — real checklist data for early-1950s sets
+is genuinely out there and browsable, same as market data, just not exposed as
+a free bulk/queryable API this app can call at runtime (`docs/ARCHITECTURE.md`
+section E). These five follow `POST /api/cards`'s "no fake precision" rule
+exactly: no population or sales data was fabricated to fill them out — they
+render with an unscored estimate and no comps until real sales are logged,
+same as any card added through the form.
 
 ## Asset versioning
 
