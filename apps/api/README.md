@@ -226,11 +226,32 @@ and bury real signal in noise. Instead:
   entered by hand through `POST /api/cards`. Nothing is promoted just by
   existing in the index — only by a real user action touching that card.
 
-Baseball/Topps only, and 2016 is where this particular archive ends — real
-coverage for other sports and manufacturers (Bowman, Panini, Donruss, Upper
-Deck, basketball/football/hockey/soccer) still doesn't have an equivalent
-free bulk source found yet. `POST /api/cards` remains the fallback for any of
-those until one does.
+Baseball/Topps only right now, and 2016 is where this one archive ends. Real
+free bulk coverage for other sports and manufacturers doesn't exist yet —
+checked directly and ruled out, not just unsearched:
+
+- **TCDB** has the broadest real coverage of any single site (all sports, all
+  eras, inserts/parallels/autos) but explicitly declined bulk export when
+  asked on their own forum, and their `robots.txt` allowing crawlers on
+  checklist pages is about search indexing, not license to extract the whole
+  database — so this doesn't scrape TCDB, same standard as Heritage above.
+- **Topps.com's official checklists** are real but sit behind Cloudflare
+  bot-detection (confirmed by hitting the challenge page directly) — blocked
+  for automated access regardless of who's asking, and current-releases-only
+  even if it weren't.
+- **Panini** posts an Excel checklist per product around release — same
+  limitation: one file, current year, no historical archive.
+- **SportsCardsPro/PriceCharting** ($49/mo Legendary tier) is real and
+  broader — confirmed variant-level 1952 Topps coverage (639 tracked items,
+  not just the 407 base cards) — but it's paid and bundles in pricing, which
+  this build is deliberately sequencing after checklist coverage.
+
+`SOURCES` in `app/checklist.py` is a registry, not a single hardcoded path,
+specifically so the next real archive that turns up (another sport, another
+manufacturer) is a one-line addition — normalize it into the same
+`{year, card_number, team, player, set_name?}` row shape, drop the JSON in
+`app/data/`, add a `BulkSource` entry. `POST /api/cards` remains the fallback
+for anything without a bulk source, same as always.
 
 ## Asset versioning
 
