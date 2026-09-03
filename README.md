@@ -1,14 +1,18 @@
 # The Grail
 
-A collector-first sports-card operating system and, ultimately, a transparent card
-marketplace. **eBay digitized the classified ad. The Grail digitizes the collection.**
+Market infrastructure for sports cards — real-time portfolio intelligence, market
+data, and transactions, in one platform. Not a collection tracker, a scanner, a
+pricing guide, or a marketplace — the platform that connects those into one
+lifecycle: **Discover → Analyze → Buy → Own → Value → Grade → Track → Trade → Sell**.
 
-Scan → Collection → Value → Want List → Trade Box → Match → Negotiate → Transaction.
+**eBay digitized the classified ad. The Grail digitizes the collection.**
 
 ## In this repo
 
 - [`handoff/`](handoff) — the founder handoff: product thesis, UX direction, market/data
   rules, visual references, prototypes and the market-data engine scaffold, unmodified.
+- [`docs/POSITIONING.md`](docs/POSITIONING.md) — the current product thesis, competitive
+  framing, and an honest lifecycle-stage-by-stage read of what's actually built.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — proposed repo structure, component map,
   data model/API map, milestones and marketplace extension points.
 - [`apps/api/`](apps/api) — FastAPI service: the market-data API plus the full frontend
