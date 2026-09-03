@@ -1,11 +1,15 @@
 # The Grail
 
-Market infrastructure for sports cards — real-time portfolio intelligence, market
-data, and transactions, in one platform. Not a collection tracker, a scanner, a
-pricing guide, or a marketplace — the platform that connects those into one
-lifecycle: **Discover → Analyze → Buy → Own → Value → Grade → Track → Trade → Sell**.
+The analytics and intelligence layer for sports card collecting —
+Bloomberg/Robinhood-style portfolio tracking, a proprietary rating system
+(the G Score), and (ahead of us) AI-driven recommendations and a social
+discovery graph. Deliberately **not** a marketplace or transaction processor
+— see [`docs/POSITIONING.md`](docs/POSITIONING.md) for the full thesis and
+why commerce is explicitly off the roadmap, not just deferred.
 
-**eBay digitized the classified ad. The Grail digitizes the collection.**
+**eBay digitized the classified ad. The Grail digitizes the collection —
+and helps you find the collector on the other end of the trade, without
+ever becoming the middleman.**
 
 ## In this repo
 
@@ -38,10 +42,13 @@ Every surface from the handoff's preferred UI references now exists and is wired
 real backend logic (Grail Estimate/Rating, market trend, collection, suggested
 pickups, a Trade Table demo). What's still a preview rather than a finished feature:
 
-- **Commerce (Buy/Offer/Trade settlement, auctions, payments)** — intentionally last,
-  per `handoff/HANDOFF.md` §17 ("do not begin with commerce until Collection + Card
-  Terminal + Scan/Add are excellent"). Buttons are present and clickable so the flow
-  is visible, but nothing settles a transaction yet — that's the Marketplace milestone.
+- **Commerce (Buy/Offer/Trade settlement, auctions, payments) is retired, not
+  deferred** — `docs/POSITIONING.md` ("What changed, and why") narrows The Grail to
+  analytics/intelligence/social-discovery and deliberately excludes ever processing a
+  transaction. The Card Market Terminal's Buy/Offer/Trade buttons still exist and are
+  still inert — that copy is now stale against the current thesis, not a preview of
+  a future milestone, and should be read as pending a rewrite toward the new
+  **Connect** lifecycle stage (contact/message, not checkout) rather than commerce.
 - **Auth / multiple users** — one seeded demo collector, no accounts yet (Phase 1).
 - **Catalog isn't fixed size anymore** — it started as 8 demo cards with real market
   history (looked up by hand through PSA's Auction Prices Realized, since none of

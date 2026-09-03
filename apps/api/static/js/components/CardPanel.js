@@ -155,9 +155,10 @@ export function CardPanel(card, trend, owned) {
   }
   left.appendChild(actions);
 
-  // Real, working — unlike Buy/Offer/Trade, which are commerce and
-  // intentionally deferred (HANDOFF.md section 17). Only shown for unowned
-  // cards, toggled by the ADD TO COLLECTION button above.
+  // Real, working — the whole point per docs/POSITIONING.md: The Grail
+  // tracks what you own and helps you find who to talk to about the rest,
+  // it never processes a purchase itself. Only shown for unowned cards,
+  // toggled by the ADD TO COLLECTION button above.
   const addCollectionForm = document.createElement("div");
   addCollectionForm.className = "comp-form";
   addCollectionForm.hidden = true;
@@ -219,7 +220,7 @@ export function CardPanel(card, trend, owned) {
   note.className = "action-note";
   note.textContent = owned
     ? "This card is in your Collection."
-    : "Buy/Offer/Trade ship with the Marketplace milestone — adding to your Collection is real today.";
+    : "The Grail doesn't process purchases — add it to your Collection to track it, or search the market to find who has one.";
   left.appendChild(note);
 
   actions.addEventListener("click", (e) => {

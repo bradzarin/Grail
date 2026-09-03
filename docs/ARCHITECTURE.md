@@ -223,6 +223,21 @@ GET  /api/collection/summary        — aggregate value, Grail count, status bre
   acceptable for Milestone 1 (single graded state per demo card) but flagged for Phase 1
   ("grade normalization" is already on the scaffold's own README TODO list).
 
+## Status update — sections F–H retired by `docs/POSITIONING.md`
+
+The marketplace/commerce design in sections F–H below was written as a
+*future* milestone under the original handoff thesis (commerce deferred,
+not excluded). `docs/POSITIONING.md`'s "What changed, and why" narrows The
+Grail's scope to analytics, the G Score, AI recommendations, and social
+discovery, and explicitly takes Grail-mediated commerce (listings, auctions,
+offers, settlement) off the roadmap rather than merely deferring it further.
+Sections F–H are kept below as a historical design record — the trade
+state machine, marketplace-inventory model, and settlement-to-market-data
+write were real, considered proposals — but they are not a build target.
+Anything resembling a "Trade"/"Buy"/"Sell" surface going forward should be
+read against the new **Connect** lifecycle stage (arm's-length contact
+between two collectors, never a Grail-processed transaction) instead.
+
 ## F. Marketplace domain boundaries and state machines
 
 Marketplace is a layer *on top of* Collection, not a fork of it. `CARD_INSTANCE` gains an
