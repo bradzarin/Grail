@@ -21,9 +21,8 @@ function popStat(label, value) {
   return div;
 }
 
-// Card hero + Grail Estimate + Market Trends terminal, shared by the Home
-// dashboard's featured-card spotlight and the standalone Card Market Terminal
-// (card.html). See docs/ARCHITECTURE.md section B — one implementation, reused.
+// Card hero + Grail Estimate + Market Trends terminal for the standalone Card
+// Market Terminal (card.html). See docs/ARCHITECTURE.md section B.
 export function CardPanel(card, trend, owned) {
   const grid = document.createElement("div");
   grid.className = "terminal-grid";
@@ -45,8 +44,14 @@ export function CardPanel(card, trend, owned) {
 
   const tagRow = document.createElement("div");
   tagRow.className = "tag-row";
-  const g = GBadge(card.rating);
-  if (g) tagRow.appendChild(g);
+  const gSlot = document.createElement("span");
+  tagRow.appendChild(gSlot);
+  function renderGBadge(rating) {
+    gSlot.innerHTML = "";
+    const g = GBadge(rating);
+    if (g) gSlot.appendChild(g);
+  }
+  renderGBadge(card.rating);
   const badgeSource = [card.rookie && "Rookie", card.autograph && "Auto", card.relic && "Relic", ...card.tags].filter(Boolean);
   badgeSource.forEach((t) => {
     const pill = document.createElement("span");
@@ -56,7 +61,17 @@ export function CardPanel(card, trend, owned) {
   });
   left.appendChild(tagRow);
 
-  left.appendChild(GrailEstimatePanel(card.estimate));
+  const estimateSlot = document.createElement("div");
+  estimateSlot.appendChild(GrailEstimatePanel(card.estimate));
+  left.appendChild(estimateSlot);
+
+  // MarketTicker only calls this when the comp was entered at the card's
+  // canonical grade — the only case where the estimate/rating shown here changes.
+  function onCompAdded(freshCard) {
+    estimateSlot.innerHTML = "";
+    estimateSlot.appendChild(GrailEstimatePanel(freshCard.estimate));
+    renderGBadge(freshCard.rating);
+  }
 
   const actions = document.createElement("div");
   actions.className = "action-row";
@@ -112,7 +127,7 @@ export function CardPanel(card, trend, owned) {
   left.appendChild(popRow);
 
   const right = document.createElement("div");
-  right.appendChild(MarketTicker(card.card_id, card.grade, trend.sales || []));
+  right.appendChild(MarketTicker(card.card_id, card.grade, trend.sales || [], onCompAdded));
 
   grid.appendChild(left);
   grid.appendChild(right);

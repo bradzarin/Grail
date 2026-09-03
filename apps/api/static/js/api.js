@@ -3,7 +3,13 @@ const BASE = "/api";
 async function request(path, options) {
   const res = await fetch(BASE + path, options);
   if (!res.ok) {
-    throw new Error(`Request to ${path} failed (${res.status})`);
+    let detail = null;
+    try {
+      detail = (await res.json())?.detail;
+    } catch {
+      // body wasn't JSON — fall through to the generic message
+    }
+    throw new Error(detail || `Request to ${path} failed (${res.status})`);
   }
   return res.json();
 }
@@ -20,6 +26,13 @@ export const api = {
   getTradeDemo: () => request("/trade/demo"),
   addToCollection: (body) =>
     request("/collection", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  getCompSources: () => request("/comp-sources"),
+  addComp: (cardId, body) =>
+    request(`/cards/${encodeURIComponent(cardId)}/comps`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

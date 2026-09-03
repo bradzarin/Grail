@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .db import init_db, refresh_logs, sales as sales_rows
+from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
 from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance
 from .service import refresh, trend
 from .valuation import grail_estimate, grail_rating
@@ -24,6 +24,25 @@ load_dotenv()
 # genuine "insufficient data" states instead of borrowed numbers. See HANDOFF.md
 # section 6 ("no fake precision") and docs/ARCHITECTURE.md section E.
 SEEDED_CARD_IDS = {"mj-scoring-kings-5"}
+
+# No source here has a free, ToS-compliant scraping path for arbitrary cards —
+# eBay sold data requires an approved Marketplace Insights token (Limited Release),
+# PSA APR has no general search API, Heritage prohibits automated scraping, and Card
+# Ladder / Sports Card Investor are paid products whose product *is* this data. See
+# docs/ARCHITECTURE.md section E. Until real API access exists, a human who actually
+# looked up a real sale on one of these sites can log it here instead — same `sales`
+# table and schema the adapters write into, just entered by hand and marked
+# unverified until someone can audit it.
+COMP_SOURCES = [
+    "eBay",
+    "PSA Auction Prices Realized",
+    "Heritage Auctions",
+    "Card Ladder",
+    "Sports Card Investor",
+    "Fanatics Collect",
+    "Goldin",
+    "Other",
+]
 
 
 async def periodic_refresh(app):
@@ -146,6 +165,58 @@ async def refresh_now(card_id: str):
 def get_refresh_log(card_id: str):
     _card_or_404(card_id)
     return refresh_logs(card_id)
+
+
+@app.get("/api/comp-sources")
+def comp_sources():
+    return COMP_SOURCES
+
+
+class AddCompRequest(BaseModel):
+    sold_at: str  # YYYY-MM-DD
+    price: float
+    venue: str
+    grade: Optional[str] = None
+    source_url: Optional[str] = None
+
+
+@app.post("/api/cards/{card_id}/comps")
+def add_comp(card_id: str, body: AddCompRequest):
+    """Manual comp entry — see docs/ARCHITECTURE.md section E on why this exists
+    instead of live scrapers for eBay/PSA/Heritage/Card Ladder/Sports Card
+    Investor. Writes into the same `sales` table and schema the source adapters
+    use, so it immediately factors into this card's Grail Estimate/Rating and
+    shows up on the ticker like any other point — just rendered as unverified
+    (gray dot, "Unverified" in the sales table) until someone can audit it,
+    same as any other unverified observation."""
+    card = _card_or_404(card_id)
+    try:
+        sold_date = date.fromisoformat(body.sold_at)
+    except ValueError:
+        raise HTTPException(422, "sold_at must be an ISO date (YYYY-MM-DD)")
+    if sold_date > date.today():
+        raise HTTPException(422, "sold_at cannot be in the future")
+    if body.price <= 0:
+        raise HTTPException(422, "price must be positive")
+    if not body.venue or not body.venue.strip():
+        raise HTTPException(422, "venue is required")
+
+    grade = (body.grade or card.grade).strip()
+    inserted = insert_sale({
+        "card_id": card.card_id,
+        "grade": grade,
+        "sold_at": body.sold_at,
+        "price": body.price,
+        "venue": body.venue.strip(),
+        "source_url": (body.source_url or "").strip() or None,
+        "verified": False,
+    })
+    return {
+        "inserted": bool(inserted),
+        "duplicate": not inserted,
+        "trend": trend(card, grade),
+        "card": _card_summary(card),
+    }
 
 
 _next_instance_num = itertools.count(len(COLLECTION) + 1)

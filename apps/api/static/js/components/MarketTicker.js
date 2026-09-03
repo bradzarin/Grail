@@ -1,5 +1,6 @@
 import { money, shortDate } from "../format.js";
 import { api } from "../api.js";
+import { showToast } from "../toast.js";
 
 const PERIODS = [
   ["30D", 30],
@@ -30,7 +31,12 @@ function axisLabel(ms, days) {
 
 // True-calendar-spacing ticker over actual completed sales only. Never
 // interpolates between transactions. See HANDOFF.md section 5.
-export function MarketTicker(cardId, cardGrade, initialSales) {
+//
+// onCompAdded (optional): called after a manual comp is successfully saved, so
+// the caller can refresh anything derived from this card's estimate/rating that
+// this component doesn't own (see docs/ARCHITECTURE.md section E on why manual
+// comps exist instead of live scrapers for eBay/PSA/Heritage/etc.).
+export function MarketTicker(cardId, cardGrade, initialSales, onCompAdded) {
   const root = document.createElement("div");
   root.className = "ticker-card";
 
@@ -52,6 +58,15 @@ export function MarketTicker(cardId, cardGrade, initialSales) {
     drawSalesTable();
   });
   head.appendChild(salesToggleBtn);
+  const addCompBtn = document.createElement("button");
+  addCompBtn.className = "filter-pill";
+  addCompBtn.textContent = "+ Add Comp";
+  addCompBtn.addEventListener("click", () => {
+    compForm.hidden = !compForm.hidden;
+    addCompBtn.classList.toggle("active", !compForm.hidden);
+    if (!compForm.hidden) loadCompForm();
+  });
+  head.appendChild(addCompBtn);
   const periodToggle = document.createElement("div");
   periodToggle.className = "period-toggle";
   PERIODS.forEach(([label, days]) => {
@@ -91,6 +106,102 @@ export function MarketTicker(cardId, cardGrade, initialSales) {
     gradeToggle.appendChild(btn);
   });
   root.appendChild(gradeToggle);
+
+  const compForm = document.createElement("div");
+  compForm.className = "comp-form";
+  compForm.hidden = true;
+  root.appendChild(compForm);
+  let compSources = null;
+
+  async function loadCompForm() {
+    if (compSources) return; // already built
+    compForm.innerHTML = `<div class="state-block" style="padding:20px"><div class="spinner"></div>Loading sources…</div>`;
+    try {
+      compSources = await api.getCompSources();
+    } catch (err) {
+      compForm.innerHTML = "";
+      compForm.appendChild(emptyBlock(`Couldn't load comp sources — ${err.message}`));
+      return;
+    }
+    renderCompForm();
+  }
+
+  function renderCompForm() {
+    const today = new Date().toISOString().slice(0, 10);
+    const fieldStyle = "display:block;margin-top:4px;border:1px solid var(--border-strong);border-radius:6px;padding:7px 10px;font-size:13px;width:100%";
+    compForm.innerHTML = `
+      <div class="comp-form__grid">
+        <label style="font-size:12px;color:var(--ink-soft)">Source
+          <select id="comp-source" style="${fieldStyle}">
+            ${compSources.map((s) => `<option value="${s}">${s}</option>`).join("")}
+          </select>
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft)">Grade
+          <select id="comp-grade" style="${fieldStyle}">
+            ${GRADE_TABS.map((g) => `<option value="${g}" ${g === grade ? "selected" : ""}>${g}</option>`).join("")}
+          </select>
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft)">Sale date
+          <input id="comp-date" type="date" max="${today}" value="${today}" style="${fieldStyle}" />
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft)">Sale price
+          <input id="comp-price" type="number" min="0.01" step="0.01" placeholder="0.00" style="${fieldStyle}" />
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft);grid-column:1/-1">Listing URL <span style="color:var(--ink-faint)">(optional, but recommended for auditability)</span>
+          <input id="comp-url" type="url" placeholder="https://…" style="${fieldStyle}" />
+        </label>
+      </div>
+      <div class="market-read" style="margin-top:10px">
+        You looked this sale up yourself — it saves as <b>unverified</b> until someone can audit it
+        against the source, same as any other unaudited observation.
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px">
+        <button class="action-btn" id="comp-submit" style="max-width:180px">Save Comp</button>
+        <button class="action-btn action-btn--secondary" id="comp-cancel" style="max-width:120px">Cancel</button>
+      </div>
+    `;
+    compForm.querySelector("#comp-cancel").addEventListener("click", () => {
+      compForm.hidden = true;
+      addCompBtn.classList.remove("active");
+    });
+    compForm.querySelector("#comp-submit").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const sold_at = compForm.querySelector("#comp-date").value;
+      const price = parseFloat(compForm.querySelector("#comp-price").value);
+      const venue = compForm.querySelector("#comp-source").value;
+      const compGrade = compForm.querySelector("#comp-grade").value;
+      const source_url = compForm.querySelector("#comp-url").value.trim();
+      if (!sold_at || !(price > 0)) {
+        showToast("Enter a valid sale date and price.");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      try {
+        const result = await api.addComp(cardId, { sold_at, price, venue, grade: compGrade, source_url: source_url || undefined });
+        if (result.duplicate) {
+          showToast("That exact sale is already on record.");
+        } else {
+          showToast(`Saved — ${venue}, ${money(price)} on ${sold_at}.`);
+          if (compGrade === grade) {
+            sales = result.trend.sales || [];
+            draw();
+          }
+          // result.card's estimate/rating are always computed against the card's
+          // canonical grade (cardGrade, fixed at mount) — only relevant to the
+          // caller when the comp itself was entered at that same grade.
+          if (compGrade === cardGrade && typeof onCompAdded === "function") onCompAdded(result.card);
+        }
+        compForm.hidden = true;
+        addCompBtn.classList.remove("active");
+      } catch (err) {
+        showToast(`Couldn't save that comp — ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Save Comp";
+      }
+    });
+  }
 
   const wrap = document.createElement("div");
   wrap.className = "ticker-svg-wrap";

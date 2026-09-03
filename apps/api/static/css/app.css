@@ -760,6 +760,22 @@ button.card-tile { font: inherit; padding: 0; width: 100%; }
 .sales-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
 .sales-table tr:last-child td { border-bottom: none; }
 
+.comp-form {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--canvas-sunken);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.comp-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.comp-form__grid > * { min-width: 0; }
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;
