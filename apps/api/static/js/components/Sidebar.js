@@ -18,7 +18,7 @@ export function Sidebar(active) {
   const brand = document.createElement("a");
   brand.href = "/";
   brand.className = "sidebar__brand";
-  brand.innerHTML = `<img src="/static/assets/the_grail_logo.png" alt="" onerror="this.remove()" /><span>The Grail</span>`;
+  brand.innerHTML = `<img src="/static/assets/the_grail_logo.png" alt="The Grail" onerror="this.remove()" />`;
   aside.appendChild(brand);
 
   const nav = document.createElement("nav");

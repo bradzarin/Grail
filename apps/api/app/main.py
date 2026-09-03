@@ -64,9 +64,23 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
+class NoCacheStaticFiles(StaticFiles):
+    """Plain StaticFiles has no Cache-Control header, so browsers fall back to
+    heuristic caching and can keep serving a stale JS/CSS file well after it's
+    changed on disk — bit both local testing and a real page load in this
+    project already. `no-cache` still lets the browser use a cached body when
+    the server confirms via ETag it's unchanged (a cheap 304), it just forces
+    that check on every request instead of skipping it."""
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 app = FastAPI(title="The Grail Market Data API", version="0.3.0", lifespan=lifespan)
 STATIC = Path(__file__).resolve().parents[1] / "static"
-app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.mount("/static", NoCacheStaticFiles(directory=STATIC), name="static")
 
 PAGES = ["index", "card", "collection", "market", "trade", "grails", "wants", "scan", "alerts", "profile"]
 
@@ -132,7 +146,7 @@ def _owned_card_ids():
 for _page in PAGES:
     def _make_handler(name):
         def _handler():
-            return FileResponse(STATIC / f"{name}.html")
+            return FileResponse(STATIC / f"{name}.html", headers={"Cache-Control": "no-cache"})
         return _handler
     app.get(f"/{_page}.html" if _page != "index" else "/")(_make_handler(_page))
 

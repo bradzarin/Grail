@@ -14,10 +14,7 @@ function Hero(summary) {
   div.className = "home-hero";
   div.innerHTML = `
     <img src="/static/assets/the_grail_logo.png" alt="The Grail" onerror="this.remove()" />
-    <div>
-      <div class="home-hero__word">The Grail</div>
-      <div class="home-hero__tagline">Love the hobby. Know what you own. Find what you love. Trade what you don't.</div>
-    </div>
+    <div class="home-hero__tagline">Know what you own. Find what you love.</div>
     <div class="home-hero__spacer"></div>
     <div class="home-hero__stat">
       <div class="label">Est. Collection Value</div>
