@@ -118,6 +118,17 @@ Both paths write into the exact same `sales` table and schema — there's no
 structural difference between "real data I looked up" and "real data an
 adapter fetched," only the `verified` flag and how it got there.
 
+## Asset versioning
+
+Every page is served from `/assets/{ASSET_VERSION}/js/...` and `/css/...`,
+where `ASSET_VERSION` is set once at process start (`app/main.py`). A JS/CSS
+edit needs a server restart to show up — `Cache-Control: no-cache` alone
+wasn't reliably enough (something between browser and origin kept serving a
+stale file even past hard-refreshes), and a URL that changes on restart can't
+return stale bytes regardless of what any cache in the chain does with
+headers. Relative imports between JS files resolve against the versioned URL
+automatically, so only the page template needed to change, not every file.
+
 ## Why no framework
 
 `handoff/HANDOFF.md` recommends Next.js + TypeScript for production but says the

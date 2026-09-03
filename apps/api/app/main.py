@@ -1,6 +1,7 @@
 import asyncio
 import itertools
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
@@ -8,7 +9,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -65,12 +66,14 @@ async def lifespan(app: FastAPI):
 
 
 class NoCacheStaticFiles(StaticFiles):
-    """Plain StaticFiles has no Cache-Control header, so browsers fall back to
-    heuristic caching and can keep serving a stale JS/CSS file well after it's
-    changed on disk — bit both local testing and a real page load in this
-    project already. `no-cache` still lets the browser use a cached body when
-    the server confirms via ETag it's unchanged (a cheap 304), it just forces
-    that check on every request instead of skipping it."""
+    """Cache-Control: no-cache forces revalidation on every request instead of
+    trusting a cached copy blindly — cheap here (a 304 via ETag when nothing
+    changed). This alone turned out not to be enough in practice (something
+    between browser and origin — proxy, preview infra — kept serving a stale
+    JS file even past hard-refreshes and full session restarts), which is why
+    /assets/{ASSET_VERSION} below exists: a URL that changes on every server
+    restart, so a cache keyed on URL can't return stale bytes no matter what
+    it does with headers. This header stays as defense in depth."""
 
     def file_response(self, *args, **kwargs):
         response = super().file_response(*args, **kwargs)
@@ -81,6 +84,25 @@ class NoCacheStaticFiles(StaticFiles):
 app = FastAPI(title="The Grail Market Data API", version="0.3.0", lifespan=lifespan)
 STATIC = Path(__file__).resolve().parents[1] / "static"
 app.mount("/static", NoCacheStaticFiles(directory=STATIC), name="static")
+
+# Changes every process start, so /assets/{ASSET_VERSION}/js/... is a brand
+# new URL each time the server restarts during development — see
+# NoCacheStaticFiles above for why this exists alongside the Cache-Control
+# header rather than relying on it alone. JS files import each other with
+# relative paths (e.g. "../components/Widgets.js"), which resolve against
+# whatever URL the importing module was itself loaded from — so serving the
+# *entry* script from a versioned path is enough to version its whole import
+# graph, without touching any import statement.
+ASSET_VERSION = str(int(time.time()))
+app.mount(f"/assets/{ASSET_VERSION}", NoCacheStaticFiles(directory=STATIC), name="static_versioned")
+
+
+def _render_page(name: str) -> HTMLResponse:
+    html = (STATIC / f"{name}.html").read_text()
+    html = html.replace("/static/js/", f"/assets/{ASSET_VERSION}/js/")
+    html = html.replace("/static/css/", f"/assets/{ASSET_VERSION}/css/")
+    return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+
 
 PAGES = ["index", "card", "collection", "market", "trade", "grails", "wants", "scan", "alerts", "profile"]
 
@@ -146,7 +168,7 @@ def _owned_card_ids():
 for _page in PAGES:
     def _make_handler(name):
         def _handler():
-            return FileResponse(STATIC / f"{name}.html", headers={"Cache-Control": "no-cache"})
+            return _render_page(name)
         return _handler
     app.get(f"/{_page}.html" if _page != "index" else "/")(_make_handler(_page))
 
