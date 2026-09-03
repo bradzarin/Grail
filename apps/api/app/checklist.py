@@ -64,6 +64,22 @@ Current sources:
   XLSX (beckett.com/news/2023-panini-select-wwe-wrestling-cards). First
   wrestling coverage — added "Wrestling" to js/grades.js's SPORTS list to
   match.
+- donruss_soccer_2023_24.json — every card in 2023-24 Donruss Soccer (1,250
+  rows across 29 real subsets), from a Beckett News XLSX.
+- panini_select_premier_league_2024_25.json — every card in 2024-25 Panini
+  Select Premier League Soccer (845 rows across 27 real subsets, tiered base
+  set), from a Beckett News XLSX.
+- panini_prizm_world_cup_2026.json — every card in 2026 Panini Prizm FIFA
+  World Cup Soccer (3,734 rows across 118 real subsets — by far the largest
+  single product in this registry, players from all 48 qualified nations),
+  from a Beckett News XLSX.
+- topps_chrome_basketball_2025_26.json — every card in 2025-26 Topps Chrome
+  Basketball (1,254 rows across 43 real subsets), from a Beckett News XLSX —
+  second basketball source alongside Panini Origins.
+- bowman_chrome_baseball_2025.json — every card in 2025 Bowman Chrome
+  Baseball (857 rows across 30 real subsets, prospect- and rookie-heavy),
+  from a Beckett News XLSX — a modern complement to the vintage 1952-2016
+  Topps Baseball archive above.
 
 All of the Beckett-sourced entries above follow the same per-sheet parsing
 pattern (a "N cards" line marks each real subset's start; app/data/ holds
@@ -125,6 +141,31 @@ SOURCES: tuple[BulkSource, ...] = (
         sport="Wrestling",
         manufacturer="Panini",
         product="Select",
+    ),
+    BulkSource(path="donruss_soccer_2023_24.json", sport="Soccer", manufacturer="Panini", product="Donruss"),
+    BulkSource(
+        path="panini_select_premier_league_2024_25.json",
+        sport="Soccer",
+        manufacturer="Panini",
+        product="Select Premier League",
+    ),
+    BulkSource(
+        path="panini_prizm_world_cup_2026.json",
+        sport="Soccer",
+        manufacturer="Panini",
+        product="Prizm FIFA World Cup",
+    ),
+    BulkSource(
+        path="topps_chrome_basketball_2025_26.json",
+        sport="Basketball",
+        manufacturer="Topps",
+        product="Chrome",
+    ),
+    BulkSource(
+        path="bowman_chrome_baseball_2025.json",
+        sport="Baseball",
+        manufacturer="Bowman",
+        product="Chrome",
     ),
 )
 

@@ -71,8 +71,8 @@ Open `http://127.0.0.1:8000`.
 - `app/cardgen.py` — `slugify()`/`palette_for()`, the id-generation and deterministic
   generated-art color assignment shared by `POST /api/cards` and the bulk checklist
   loader, so both paths build a `CardSpec` the same way.
-- `app/checklist.py` + `app/data/*.json` — the 52,294-card bulk checklist registry
-  (8 sources so far, growing), kept separate from `CARDS` — see "Bulk checklist" below.
+- `app/checklist.py` + `app/data/*.json` — the 60,234-card bulk checklist registry
+  (13 sources so far, growing), kept separate from `CARDS` — see "Bulk checklist" below.
 
 ## Card art
 
@@ -106,7 +106,7 @@ only when the card is owned.
 GET  /api/cards                    CARD_MASTER catalog + current estimate/rating
 POST /api/cards                    create a new CARD_MASTER from real, user-supplied
                                     identity (see "Card catalog scope" below)
-GET  /api/checklist/search         search the 52,294-card bulk checklist registry
+GET  /api/checklist/search         search the 60,234-card bulk checklist registry
                                     (?q=, ?limit=) — see "Bulk checklist" below
 GET  /api/cards/{id}                one card
 GET  /api/cards/{id}/trend          transaction-level sales + rollup metrics
@@ -189,10 +189,10 @@ no population or sales data was fabricated to fill them out — they render
 with an unscored estimate and no comps until real sales are logged, same as
 any card added through the form.
 
-### Bulk checklist: 52,294 real cards across eight sources
+### Bulk checklist: 60,234 real cards across thirteen sources
 
 Beyond those five, `app/checklist.py` holds a much larger real index —
-currently eight sources, registered in `SOURCES` (`app/checklist.py`):
+currently thirteen sources, registered in `SOURCES` (`app/checklist.py`):
 
 1. **Every Topps Baseball base card, 1952–2016** (41,823 rows: card number,
    team, player) — `app/data/topps_baseball_1952_2016.json`. TCDB (the
@@ -229,11 +229,34 @@ currently eight sources, registered in `SOURCES` (`app/checklist.py`):
    families) — `app/data/panini_select_wwe_2023.json`, from a Beckett News
    XLSX. First wrestling coverage — `js/grades.js`'s `SPORTS` list now
    includes "Wrestling" to match.
+9. **2023-24 Donruss Soccer, every card** (1,250 rows across 29 real
+   subsets) — `app/data/donruss_soccer_2023_24.json`, from a Beckett News
+   XLSX.
+10. **2024-25 Panini Select Premier League Soccer, every card** (845 rows
+    across 27 real subsets, tiered base set) —
+    `app/data/panini_select_premier_league_2024_25.json`, from a Beckett
+    News XLSX.
+11. **2026 Panini Prizm FIFA World Cup Soccer, every card** (3,734 rows
+    across 118 real subsets — the largest single product in this registry,
+    players from all 48 qualified nations) —
+    `app/data/panini_prizm_world_cup_2026.json`, from a Beckett News XLSX.
+12. **2025-26 Topps Chrome Basketball, every card** (1,254 rows across 43
+    real subsets) — `app/data/topps_chrome_basketball_2025_26.json`, from a
+    Beckett News XLSX — second basketball source alongside Panini Origins.
+13. **2025 Bowman Chrome Baseball, every card** (857 rows across 30 real
+    subsets, prospect- and rookie-heavy) —
+    `app/data/bowman_chrome_baseball_2025.json`, from a Beckett News XLSX —
+    a modern complement to the vintage Topps Baseball archive.
 
-Beckett publishes a checklist article like #3-#8, frequently with a matching
+Soccer now has four sources (#3, #9, #10, #11) spanning club and
+international competition, two different manufacturers, and both a
+club-season and a World Cup product — deliberately built out further than
+any other sport so far, rather than resting on the one UEFA source.
+
+Beckett publishes a checklist article like #3-#13, frequently with a matching
 free XLSX download, for most notable releases they cover, across every
 sport, going back years — a real, large, free, structured source this repo
-hadn't tapped until a user found one directly. #4-#8 came from the same
+hadn't tapped until a user found one directly. #4-#13 came from the same
 place, pulled directly rather than waiting for another one to be handed over
 — `app/data/` holds only the normalized checklist rows (year, card number,
 team, player, set name, rookie/autograph flags), never Beckett's own article
