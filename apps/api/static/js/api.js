@@ -17,6 +17,12 @@ async function request(path, options) {
 export const api = {
   listCards: () => request("/cards"),
   getCard: (id) => request(`/cards/${encodeURIComponent(id)}`),
+  createCard: (body) =>
+    request("/cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   getTrend: (id, grade) => request(`/cards/${encodeURIComponent(id)}/trend${grade ? `?grade=${encodeURIComponent(grade)}` : ""}`),
   getCollection: () => request("/collection"),
   getCollectionSummary: () => request("/collection/summary"),

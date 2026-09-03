@@ -63,7 +63,10 @@ Open `http://127.0.0.1:8000`.
   the API already returned, just made visible. `js/components/PortfolioChart.js` and
   `BreakdownWidget.js` render the portfolio graph and sport/player breakdown on Home.
   `js/components/CardArt.js` generates every card face (see "Card art" below) and is
-  used everywhere a card renders — tiles, thumbnails, hero.
+  used everywhere a card renders — tiles, thumbnails, hero. `js/grades.js` is the shared
+  Raw/PSA/BGS/SGC/CGC grade list every grade picker in the app uses.
+  `js/components/AddCardForm.js` (Market page) creates a new catalog card from real
+  user-supplied identity — see "Card catalog scope" below.
 
 ## Card art
 
@@ -95,6 +98,8 @@ only when the card is owned.
 
 ```
 GET  /api/cards                    CARD_MASTER catalog + current estimate/rating
+POST /api/cards                    create a new CARD_MASTER from real, user-supplied
+                                    identity (see "Card catalog scope" below)
 GET  /api/cards/{id}                one card
 GET  /api/cards/{id}/trend          transaction-level sales + rollup metrics
                                     (?grade= to inspect a different grade tab)
@@ -143,6 +148,26 @@ instead:
 Both paths write into the exact same `sales` table and schema — there's no
 structural difference between "real data I looked up" and "real data an
 adapter fetched," only the `verified` flag and how it got there.
+
+## Card catalog scope
+
+The catalog isn't fixed at 8 hand-picked cards — `POST /api/cards` lets anyone
+add any real card, any sport, any era. This exists for the same reason manual
+comp entry does: there's no free bulk card-checklist database covering
+"every card since the 1950s" to wire in (same category of gap as live market
+data, one level up the stack — see `docs/ARCHITECTURE.md` section E). TCDB has
+a large community checklist but no public API; PSA's own spec pages are
+effectively a checklist too but only browsable, not queryable by this app at
+runtime. Rather than fake comprehensive coverage, a human who actually knows
+the card enters its real identity (`app/main.py`'s `create_card`) — player,
+sport, year, manufacturer, product, set, parallel, serial, grade (any of
+Raw/PSA/BGS/SGC/CGC — `js/grades.js`). It becomes a first-class `CARD_MASTER`
+immediately: generated card art (deterministic color assignment, same system
+as the seed catalog), a real Grail Estimate/Rating once sales exist, fully
+searchable from Market — not a second-tier record. `js/components/AddCardForm.js`
+is the UI (Market page); `js/components/CardPanel.js`'s "Add to Collection"
+form is the matching real add-to-`CARD_INSTANCE` path for any card, owned or
+not, with the same full grade list.
 
 ## Asset versioning
 

@@ -1,6 +1,7 @@
 import { money, shortDate } from "../format.js";
 import { api } from "../api.js";
 import { showToast } from "../toast.js";
+import { GRADE_TABS } from "../grades.js";
 
 const PERIODS = [
   ["30D", 30],
@@ -10,10 +11,10 @@ const PERIODS = [
   ["ALL", null],
 ];
 
-// Real grade taxonomy shown as tabs. Only the card's actual stored grade has
-// sales — switching to another tab honestly shows the empty state rather than
-// fabricating a curve, per HANDOFF.md section 5 ("sparse data stays sparse").
-const GRADE_TABS = ["Raw", "PSA <5", "PSA 5", "PSA 6", "PSA 7", "PSA 8", "PSA 9", "PSA 10"];
+// GRADE_TABS (grades.js) covers Raw/PSA/BGS/SGC/CGC/Other. Only the card's
+// actual stored grade has sales — switching to another tab honestly shows the
+// empty state rather than fabricating a curve, per HANDOFF.md section 5
+// ("sparse data stays sparse").
 
 const W = 900, H = 300, L = 64, R = 20, T = 20, B = 40;
 

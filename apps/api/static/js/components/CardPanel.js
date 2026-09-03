@@ -6,6 +6,7 @@ import { GrailRatingPanel } from "./GrailRatingPanel.js";
 import { MarketTicker } from "./MarketTicker.js";
 import { isWanted, toggleWant } from "../wants.js";
 import { showToast } from "../toast.js";
+import { GRADE_TABS } from "../grades.js";
 
 function popStat(label, value) {
   const div = document.createElement("div");
@@ -147,18 +148,78 @@ export function CardPanel(card, trend, owned) {
     `;
   } else {
     actions.innerHTML = `
-      <button class="action-btn" data-act="buy">BUY NOW</button>
-      <button class="action-btn action-btn--secondary" data-act="offer">MAKE OFFER</button>
-      <button class="action-btn action-btn--secondary" data-act="trade">TRADE</button>
+      <button class="action-btn" data-act="add-collection">ADD TO COLLECTION</button>
+      <button class="action-btn action-btn--secondary" data-act="wantlist">${isWanted(card.card_id) ? "★ ON WANTLIST" : "ADD TO WANTLIST"}</button>
+      <button class="action-btn action-btn--secondary" data-act="market">SEARCH MARKET</button>
     `;
   }
   left.appendChild(actions);
+
+  // Real, working — unlike Buy/Offer/Trade, which are commerce and
+  // intentionally deferred (HANDOFF.md section 17). Only shown for unowned
+  // cards, toggled by the ADD TO COLLECTION button above.
+  const addCollectionForm = document.createElement("div");
+  addCollectionForm.className = "comp-form";
+  addCollectionForm.hidden = true;
+  if (!owned) {
+    const today = new Date().toISOString().slice(0, 10);
+    const fieldStyle = "display:block;margin-top:4px;border:1px solid var(--border-strong);border-radius:6px;padding:7px 10px;font-size:13px;width:100%";
+    addCollectionForm.innerHTML = `
+      <div class="comp-form__grid">
+        <label style="font-size:12px;color:var(--ink-soft)">Grade
+          <select id="own-grade" style="${fieldStyle}">
+            ${GRADE_TABS.filter((g) => g !== "Other").map((g) => `<option value="${g}" ${g === card.grade ? "selected" : ""}>${g}</option>`).join("")}
+          </select>
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft)">Acquired price
+          <input id="own-price" type="number" min="0" step="0.01" placeholder="0.00" style="${fieldStyle}" />
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft)">Acquired date
+          <input id="own-date" type="date" max="${today}" value="${today}" style="${fieldStyle}" />
+        </label>
+        <label style="font-size:12px;color:var(--ink-soft)">Status
+          <select id="own-status" style="${fieldStyle}">
+            <option value="PC">PC</option>
+            <option value="OPEN">OPEN</option>
+            <option value="TRADE">TRADE</option>
+            <option value="SELL">SELL</option>
+            <option value="PRIVATE">PRIVATE</option>
+          </select>
+        </label>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px">
+        <button class="action-btn" id="own-submit" style="max-width:180px">Save to Collection</button>
+        <button class="action-btn action-btn--secondary" id="own-cancel" style="max-width:120px">Cancel</button>
+      </div>
+    `;
+    addCollectionForm.querySelector("#own-cancel").addEventListener("click", () => {
+      addCollectionForm.hidden = true;
+    });
+    addCollectionForm.querySelector("#own-submit").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const grade = addCollectionForm.querySelector("#own-grade").value;
+      const acquired_price = parseFloat(addCollectionForm.querySelector("#own-price").value) || 0;
+      const status = addCollectionForm.querySelector("#own-status").value;
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      try {
+        await api.addToCollection({ card_id: card.card_id, grade, acquired_price, status });
+        showToast(`Added ${card.title} to your Collection.`);
+        location.reload();
+      } catch (err) {
+        showToast(`Couldn't add this card — ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = "Save to Collection";
+      }
+    });
+  }
+  left.appendChild(addCollectionForm);
 
   const note = document.createElement("div");
   note.className = "action-note";
   note.textContent = owned
     ? "This card is in your Collection."
-    : "Settlement (payments/escrow) ships with the Marketplace milestone — these actions preview the flow.";
+    : "Buy/Offer/Trade ship with the Marketplace milestone — adding to your Collection is real today.";
   left.appendChild(note);
 
   actions.addEventListener("click", (e) => {
@@ -172,8 +233,9 @@ export function CardPanel(card, trend, owned) {
       showToast(nowWanted ? "Added to your Wantlist" : "Removed from your Wantlist");
     } else if (act === "market") {
       location.href = `/market.html?q=${encodeURIComponent(card.player)}`;
-    } else if (act === "buy" || act === "offer" || act === "trade") {
-      showToast("Commerce ships with the Marketplace milestone — this is a preview.");
+    } else if (act === "add-collection") {
+      addCollectionForm.hidden = !addCollectionForm.hidden;
+      if (!addCollectionForm.hidden) addCollectionForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   });
 

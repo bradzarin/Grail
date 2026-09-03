@@ -1,12 +1,15 @@
 import { api } from "../api.js";
 import { mountShell } from "../shell.js";
 import { CollectionGrid } from "../components/CollectionGrid.js";
+import { AddCardForm } from "../components/AddCardForm.js";
 import { withState } from "../components/States.js";
 
 mountShell("market");
 
 const params = new URLSearchParams(location.search);
 const q = (params.get("q") || "").trim().toLowerCase();
+
+document.getElementById("add-card").appendChild(AddCardForm(params.get("q") || ""));
 
 function matches(card, query) {
   if (!query) return true;

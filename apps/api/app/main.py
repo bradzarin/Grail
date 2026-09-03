@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import itertools
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from datetime import date
@@ -14,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
-from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance
+from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance, CardSpec
 from .portfolio import breakdown as portfolio_breakdown, discover_movers, performance_series
 from .service import refresh, trend
 from .valuation import grail_estimate, grail_rating, liquidity_profile, market_commentary
@@ -241,6 +243,105 @@ def list_cards():
 @app.get("/api/cards/{card_id}")
 def get_card(card_id: str):
     return _card_summary(_card_or_404(card_id))
+
+
+def _slugify(*parts: str) -> str:
+    text = "-".join(p for p in parts if p)
+    text = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return text or "card"
+
+
+# A generated-art palette to assign new user-added cards, so they render
+# through CardArt.js like everything else instead of needing a hand-picked
+# color pair — deterministic per (player, set) so the same card always looks
+# the same, not actually random.
+_PALETTE = [
+    ("#6d5bff", "#17c3d6"), ("#CE1141", "#0B0B0B"), ("#004D98", "#A50044"),
+    ("#FEBE10", "#1B1B1B"), ("#BA0021", "#003263"), ("#0077C0", "#0B0B0B"),
+    ("#1B1B1B", "#FEBE10"), ("#F7B5CD", "#231F20"), ("#e23fa0", "#6d5bff"),
+    ("#17c3d6", "#e23fa0"),
+]
+
+
+def _palette_for(*seed_parts: str) -> tuple[str, str]:
+    seed = "|".join(seed_parts)
+    idx = int(hashlib.sha1(seed.encode()).hexdigest(), 16) % len(_PALETTE)
+    return _PALETTE[idx]
+
+
+class CreateCardRequest(BaseModel):
+    player: str
+    sport: str
+    year: str
+    manufacturer: str
+    product: str
+    set_name: str
+    card_number: str = "—"
+    parallel: Optional[str] = None
+    serial_number: Optional[str] = None
+    print_run: Optional[int] = None
+    team: Optional[str] = None
+    grade: str = "Raw"
+    rookie: bool = False
+    autograph: bool = False
+    relic: bool = False
+
+
+@app.post("/api/cards")
+def create_card(body: CreateCardRequest):
+    """There's no free bulk card-checklist database covering "any card since
+    the 1950s" to wire in here — same category of gap as real-time market data
+    (docs/ARCHITECTURE.md section E). The honest answer isn't to fake one; it's
+    the same pattern that solved that gap: a human who actually knows the card
+    enters its real identity, same as POST /api/cards/{id}/comps for a real
+    sale. Once added it's a first-class CARD_MASTER — Grail Estimate/Rating,
+    generated card art, fully searchable — not a second-tier record."""
+    required = {"player": body.player, "sport": body.sport, "year": body.year,
+                "manufacturer": body.manufacturer, "product": body.product, "set_name": body.set_name}
+    for field, value in required.items():
+        if not value.strip():
+            raise HTTPException(422, f"{field} is required")
+
+    card_id = _slugify(body.player, body.year, body.set_name, body.card_number, body.serial_number or "")
+    if card_id in CARDS:
+        suffix = 2
+        while f"{card_id}-{suffix}" in CARDS:
+            suffix += 1
+        card_id = f"{card_id}-{suffix}"
+
+    primary, secondary = _palette_for(body.player, body.set_name)
+    title_bits = [body.year.strip(), body.manufacturer.strip(), body.product.strip()]
+    if body.card_number.strip() and body.card_number.strip() != "—":
+        title_bits.append(f"#{body.card_number.strip()}")
+    title = f"{body.player.strip()} " + " ".join(b for b in title_bits if b)
+
+    card = CardSpec(
+        card_id=card_id,
+        query=f'"{body.year}" "{body.manufacturer}" "{body.product}" "{body.player}"',
+        grade=body.grade.strip() or "Raw",
+        title=title,
+        sport=body.sport.strip(),
+        year=body.year.strip(),
+        manufacturer=body.manufacturer.strip(),
+        product=body.product.strip(),
+        set_name=body.set_name.strip(),
+        player=body.player.strip(),
+        card_number=body.card_number.strip() or "—",
+        team=(body.team or "").strip() or None,
+        parallel=(body.parallel or "").strip() or None,
+        serial_number=(body.serial_number or "").strip() or None,
+        print_run=body.print_run,
+        rookie=body.rookie,
+        autograph=body.autograph,
+        relic=body.relic,
+        primary_color=primary,
+        secondary_color=secondary,
+        significance_score=50,
+        significance_source="editorial",
+        tags=("User-Added",),
+    )
+    CARDS[card_id] = card
+    return _card_summary(card)
 
 
 @app.get("/api/cards/{card_id}/trend")
