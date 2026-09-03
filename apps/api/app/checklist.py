@@ -95,7 +95,11 @@ def _load() -> dict[str, CardSpec]:
                 slug_parts.append(set_name)
             slug_parts.append(number)
             card_id = slugify(*slug_parts)
-            primary, secondary = palette_for(player, source.manufacturer, year)
+            # Seeded on set_name + number, not just player/manufacturer/year — a
+            # product with many real cards for the same player in the same year
+            # (base, inserts, autographs, parallel tiers) needs each to look like a
+            # distinct card in a grid, not the same color repeated.
+            primary, secondary = palette_for(player, source.manufacturer, year, set_name, number)
             # Some sources' set_name is already a fully-qualified descriptor (Panini's
             # CARD SET column reads like "2025 Panini Court Kings Basketball - Flawless
             # Focus" — year and manufacturer already in it); others' is a short subset
