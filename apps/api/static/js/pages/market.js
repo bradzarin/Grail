@@ -18,23 +18,48 @@ function matches(card, query) {
     .some((f) => f.toLowerCase().includes(query));
 }
 
+// The tracked catalog (CARDS) is small and rated; the bulk checklist
+// (app/checklist.py — 41,823 real Topps Baseball cards, 1952-2016) is real
+// identity data with no rating/sales yet, searched separately so an empty or
+// generic query never dumps the whole archive into the grid. See
+// apps/api/README.md "Card catalog scope".
+async function loadCombined() {
+  const [tracked, checklist] = await Promise.all([
+    api.getMarket(),
+    q ? api.searchChecklist(q) : Promise.resolve([]),
+  ]);
+  return { tracked: tracked.filter((c) => matches(c, q)), checklist };
+}
+
 async function main() {
   const gridEl = document.getElementById("grid");
   await withState(
     gridEl,
-    api.getMarket,
-    (cards, el) => {
-      const filtered = cards.filter((c) => matches(c, q));
+    loadCombined,
+    ({ tracked, checklist }, el) => {
+      const total = tracked.length + checklist.length;
       if (q) {
         const note = document.createElement("div");
         note.className = "market-read";
         note.style.marginBottom = "16px";
-        note.textContent = `Showing ${filtered.length} result${filtered.length === 1 ? "" : "s"} for "${q}".`;
+        note.textContent = `Showing ${total} result${total === 1 ? "" : "s"} for "${q}"${
+          checklist.length ? ` (${checklist.length} from the 1952–2016 Topps Baseball archive)` : ""
+        }.`;
+        el.appendChild(note);
+      } else {
+        const note = document.createElement("div");
+        note.className = "market-read";
+        note.style.marginBottom = "16px";
+        note.textContent = `41,823 more Topps Baseball cards (1952–2016) are searchable — try a player name above.`;
         el.appendChild(note);
       }
-      el.appendChild(CollectionGrid(filtered.map((card) => ({ card, status: null, grade: card.grade }))));
+      el.appendChild(
+        CollectionGrid(
+          [...tracked, ...checklist].map((card) => ({ card, status: null, grade: card.grade }))
+        )
+      );
     },
-    (cards) => cards.filter((c) => matches(c, q)).length === 0,
+    ({ tracked, checklist }) => tracked.length + checklist.length === 0,
     q ? `No cards match "${q}".` : "No cards in the catalog yet."
   );
 }

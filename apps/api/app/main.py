@@ -1,8 +1,6 @@
 import asyncio
-import hashlib
 import itertools
 import os
-import re
 import time
 from contextlib import asynccontextmanager
 from datetime import date
@@ -15,6 +13,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .cardgen import palette_for, slugify
+from .checklist import BULK_CARDS, search_bulk
 from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
 from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance, CardSpec
 from .portfolio import breakdown as portfolio_breakdown, discover_movers, performance_series
@@ -111,10 +111,19 @@ PAGES = ["index", "card", "collection", "market", "trade", "grails", "wants", "s
 
 
 def _card_or_404(card_id: str):
+    """Checks the tracked catalog first, then the bulk checklist index
+    (app/checklist.py) — the moment a bulk card is actually opened or
+    collected, it's promoted into CARDS and behaves like any other tracked
+    card from then on (refreshed, eligible for Market/Discover/Grails), same
+    as a card entered by hand through POST /api/cards."""
     card = CARDS.get(card_id)
-    if not card:
-        raise HTTPException(404, "Unknown card")
-    return card
+    if card:
+        return card
+    bulk = BULK_CARDS.get(card_id)
+    if bulk:
+        CARDS[card_id] = bulk
+        return bulk
+    raise HTTPException(404, "Unknown card")
 
 
 def _card_summary(card):
@@ -245,30 +254,6 @@ def get_card(card_id: str):
     return _card_summary(_card_or_404(card_id))
 
 
-def _slugify(*parts: str) -> str:
-    text = "-".join(p for p in parts if p)
-    text = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-    return text or "card"
-
-
-# A generated-art palette to assign new user-added cards, so they render
-# through CardArt.js like everything else instead of needing a hand-picked
-# color pair — deterministic per (player, set) so the same card always looks
-# the same, not actually random.
-_PALETTE = [
-    ("#6d5bff", "#17c3d6"), ("#CE1141", "#0B0B0B"), ("#004D98", "#A50044"),
-    ("#FEBE10", "#1B1B1B"), ("#BA0021", "#003263"), ("#0077C0", "#0B0B0B"),
-    ("#1B1B1B", "#FEBE10"), ("#F7B5CD", "#231F20"), ("#e23fa0", "#6d5bff"),
-    ("#17c3d6", "#e23fa0"),
-]
-
-
-def _palette_for(*seed_parts: str) -> tuple[str, str]:
-    seed = "|".join(seed_parts)
-    idx = int(hashlib.sha1(seed.encode()).hexdigest(), 16) % len(_PALETTE)
-    return _PALETTE[idx]
-
-
 class CreateCardRequest(BaseModel):
     player: str
     sport: str
@@ -302,14 +287,14 @@ def create_card(body: CreateCardRequest):
         if not value.strip():
             raise HTTPException(422, f"{field} is required")
 
-    card_id = _slugify(body.player, body.year, body.set_name, body.card_number, body.serial_number or "")
+    card_id = slugify(body.player, body.year, body.set_name, body.card_number, body.serial_number or "")
     if card_id in CARDS:
         suffix = 2
         while f"{card_id}-{suffix}" in CARDS:
             suffix += 1
         card_id = f"{card_id}-{suffix}"
 
-    primary, secondary = _palette_for(body.player, body.set_name)
+    primary, secondary = palette_for(body.player, body.set_name)
     title_bits = [body.year.strip(), body.manufacturer.strip(), body.product.strip()]
     if body.card_number.strip() and body.card_number.strip() != "—":
         title_bits.append(f"#{body.card_number.strip()}")
@@ -342,6 +327,20 @@ def create_card(body: CreateCardRequest):
     )
     CARDS[card_id] = card
     return _card_summary(card)
+
+
+@app.get("/api/checklist/search")
+def checklist_search(q: str, limit: int = 25):
+    """Search the bulk checklist (app/checklist.py) — currently 41,823 real
+    Topps Baseball cards, 1952-2016. Excludes anything already hand-curated in
+    CARDS so a researched vintage card (e.g. the 1952 Mantle) doesn't also
+    show up as an unrated duplicate here. Results are real identities with no
+    sales yet, same as any freshly-added card — see "Card catalog scope"."""
+    if not q.strip():
+        return []
+    existing = {(c.player.lower(), c.year, c.manufacturer.lower(), c.card_number) for c in CARDS.values()}
+    limit = max(1, min(limit, 100))
+    return [_card_summary(c) for c in search_bulk(q, limit=limit, exclude=existing)]
 
 
 @app.get("/api/cards/{card_id}/trend")

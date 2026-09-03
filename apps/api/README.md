@@ -68,6 +68,11 @@ Open `http://127.0.0.1:8000`.
   Raw/PSA/BGS/SGC/CGC grade list every grade picker in the app uses.
   `js/components/AddCardForm.js` (Market page) creates a new catalog card from real
   user-supplied identity — see "Card catalog scope" below.
+- `app/cardgen.py` — `slugify()`/`palette_for()`, the id-generation and deterministic
+  generated-art color assignment shared by `POST /api/cards` and the bulk checklist
+  loader, so both paths build a `CardSpec` the same way.
+- `app/checklist.py` + `app/data/topps_baseball_1952_2016.json` — the 41,823-card bulk
+  Topps Baseball index, kept separate from `CARDS` — see "Bulk checklist" below.
 
 ## Card art
 
@@ -101,6 +106,8 @@ only when the card is owned.
 GET  /api/cards                    CARD_MASTER catalog + current estimate/rating
 POST /api/cards                    create a new CARD_MASTER from real, user-supplied
                                     identity (see "Card catalog scope" below)
+GET  /api/checklist/search         search the 41,823-card bulk Topps Baseball index
+                                    (?q=, ?limit=) — see "Bulk checklist" below
 GET  /api/cards/{id}                one card
 GET  /api/cards/{id}/trend          transaction-level sales + rollup metrics
                                     (?grade= to inspect a different grade tab)
@@ -170,21 +177,60 @@ is the UI (Market page); `js/components/CardPanel.js`'s "Add to Collection"
 form is the matching real add-to-`CARD_INSTANCE` path for any card, owned or
 not, with the same full grade list.
 
-`app/models.py`'s `CARDS` now also carries five real 1952 checklist entries —
+`app/models.py`'s `CARDS` also carries five real 1952 checklist entries —
 Mickey Mantle 1952 Topps #311, Mickey Mantle 1952 Bowman #101, Jackie Robinson
 1952 Topps #312, Eddie Mathews 1952 Topps #407 (his rookie, the last card in
 the set), and Andy Pafko 1952 Topps #1 (the set's opening card) — looked up by
 hand via PSA's public Auction Prices Realized search
 (`psacard.com/auctionprices/search?q=...`, no login required), which also
 confirmed the real ordered start of the 1952 Topps checklist (#1–#15) card by
-card. Proof that "any sport, any era, back to the 1950s" isn't only reachable
-through the manual Add-a-Card form — real checklist data for early-1950s sets
-is genuinely out there and browsable, same as market data, just not exposed as
-a free bulk/queryable API this app can call at runtime (`docs/ARCHITECTURE.md`
-section E). These five follow `POST /api/cards`'s "no fake precision" rule
-exactly: no population or sales data was fabricated to fill them out — they
-render with an unscored estimate and no comps until real sales are logged,
-same as any card added through the form.
+card. These five follow `POST /api/cards`'s "no fake precision" rule exactly:
+no population or sales data was fabricated to fill them out — they render
+with an unscored estimate and no comps until real sales are logged, same as
+any card added through the form.
+
+### Bulk checklist: 41,823 real Topps Baseball cards, 1952–2016
+
+Beyond those five, `app/checklist.py` holds a much larger real index — every
+Topps Baseball base card from 1952 through 2016 (41,823 rows: card number,
+team, player), sourced from `app/data/topps_baseball_1952_2016.json`.
+
+Provenance: TCDB (the largest community checklist site) has no official
+export — its own forum says so directly when someone asks for exactly this
+("Exportable Complete Checklists" thread) — but a reply in that same thread
+points to a community-maintained archive
+(`thirdring.net/download/topps_*.zip`) with real, structured Topps Baseball
+checklists per year. Downloaded, parsed, and spot-checked against PSA's
+public Auction Prices Realized search before import (1952 #1 Andy Pafko,
+#311 Mickey Mantle, #407 Ed Mathews all matched exactly). A paid alternative
+exists too — SportsCardsPro/PriceCharting has a real multi-sport checklist +
+pricing API — but it needs a subscription and personal API token, so it isn't
+wired in here.
+
+This stays deliberately **out** of `CARDS`: `main.py`'s startup/periodic
+refresh loop calls the source adapters on every `CARDS` entry, and
+Discover/Market/Grails/Suggested Pickups all iterate `CARDS.values()` eagerly
+— merging ~42,000 unrated commons in there would slow every one of those down
+and bury real signal in noise. Instead:
+
+- `GET /api/checklist/search?q=...` searches this index directly (a linear
+  scan over ~42k in-memory records — a few milliseconds, no index needed at
+  this size) and excludes anything already hand-curated in `CARDS`, so e.g.
+  the researched 1952 Mantle doesn't also show up as an unrated duplicate.
+  The Market page (`js/pages/market.js`) calls this alongside `GET /api/market`
+  whenever there's a search query, and merges both into one grid.
+- `_card_or_404` (`main.py`) checks `CARDS` first, then this index — the
+  moment a bulk card is actually opened or added to a collection, it's
+  promoted into `CARDS` and behaves like any other tracked card from then on
+  (refreshed, eligible for Market/Discover/Grails), exactly like a card
+  entered by hand through `POST /api/cards`. Nothing is promoted just by
+  existing in the index — only by a real user action touching that card.
+
+Baseball/Topps only, and 2016 is where this particular archive ends — real
+coverage for other sports and manufacturers (Bowman, Panini, Donruss, Upper
+Deck, basketball/football/hockey/soccer) still doesn't have an equivalent
+free bulk source found yet. `POST /api/cards` remains the fallback for any of
+those until one does.
 
 ## Asset versioning
 

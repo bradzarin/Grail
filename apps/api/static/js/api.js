@@ -30,6 +30,7 @@ export const api = {
   getCollectionBreakdown: (by) => request(`/collection/breakdown?by=${encodeURIComponent(by)}`),
   getDiscover: () => request("/discover"),
   getMarket: () => request("/market"),
+  searchChecklist: (q) => request(`/checklist/search?q=${encodeURIComponent(q)}`),
   getGrails: () => request("/grails"),
   getSuggestedPickups: () => request("/suggested-pickups"),
   getTradeDemo: () => request("/trade/demo"),
