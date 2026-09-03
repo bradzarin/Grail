@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
 from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance
-from .portfolio import breakdown as portfolio_breakdown, performance_series
+from .portfolio import breakdown as portfolio_breakdown, discover_movers, performance_series
 from .service import refresh, trend
 from .valuation import grail_estimate, grail_rating
 
@@ -285,6 +285,14 @@ def get_collection_breakdown(by: str = "sport"):
     if by not in ("sport", "player"):
         raise HTTPException(422, "by must be 'sport' or 'player'")
     return portfolio_breakdown(get_collection(), by)
+
+
+@app.get("/api/discover")
+def discover():
+    """Personalized market movers — real momentum, ranked and reasoned against
+    what's already owned. See app/portfolio.py's discover_movers()."""
+    summaries = [_card_summary(c) for c in CARDS.values()]
+    return discover_movers(COLLECTION, summaries)
 
 
 @app.get("/api/market")

@@ -44,9 +44,11 @@ Open `http://127.0.0.1:8000`.
   at a past date — see `app/portfolio.py`.
 - `app/portfolio.py` — the portfolio-level lens on top of the same per-card estimate:
   `performance_series()` reconstructs total portfolio value over time by replaying
-  `grail_estimate()` at each real sale date (not a fabricated trend line), and
-  `breakdown()` groups the collection by sport or by player. See `docs/POSITIONING.md`
-  — this is what makes Home read like a brokerage portfolio view, not just a card list.
+  `grail_estimate()` at each real sale date (not a fabricated trend line), `breakdown()`
+  groups the collection by sport or by player, and `discover_movers()` ranks the whole
+  catalog by real momentum, reasoned against what's already owned (the Discover
+  lifecycle stage — see `docs/POSITIONING.md`). Nothing here is a separate signal from
+  the rest of the app; it's the same estimate/momentum every card page already computes.
 - `static/` — the frontend: plain HTML + CSS + native ES modules, no build step (see
   "Why no framework" below). `js/components/CardPanel.js` is the shared card
   hero+estimate+ticker used by the standalone Card Market Terminal.
@@ -85,6 +87,7 @@ GET  /api/collection/summary        aggregate value / Grail count / status break
 GET  /api/collection/performance    portfolio value over time, reconstructed from
                                     real sales (the Home portfolio graph)
 GET  /api/collection/breakdown      ?by=sport|player — portfolio grouped by that lens
+GET  /api/discover                  real market movers, personalized to what's owned
 GET  /api/market                    full catalog, ranked by real momentum
 GET  /api/grails                    catalog cards currently carrying a G badge
 GET  /api/suggested-pickups         rule-based recommendations from the owned/unowned split

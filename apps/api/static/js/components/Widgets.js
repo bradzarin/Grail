@@ -68,6 +68,61 @@ export function PerformerStrip(items) {
   return root;
 }
 
+// Discover: real market momentum, personalized to what's already owned — not
+// a vanity "trending" list. Cards without enough sales to compute momentum
+// are excluded upstream (see portfolio.discover_movers), never shown at 0%.
+export function DiscoverStrip(items) {
+  const root = document.createElement("div");
+  if (!items.length) {
+    root.appendChild(Object.assign(document.createElement("div"), {
+      className: "state-block",
+      textContent: "Not enough sales history yet to surface real movers.",
+    }));
+    return root;
+  }
+
+  const strip = document.createElement("div");
+  strip.className = "performer-strip";
+  items.slice(0, 8).forEach((row) => {
+    const card = row.card;
+    const tile = document.createElement("a");
+    tile.className = "performer-tile";
+    tile.href = `/card.html?id=${encodeURIComponent(card.card_id)}`;
+
+    const media = document.createElement("div");
+    media.className = "performer-tile__media";
+    media.appendChild(CardArt(card));
+    if (row.owned) {
+      const owned = document.createElement("div");
+      owned.className = "performer-tile__rank";
+      owned.style.width = "auto";
+      owned.style.padding = "0 8px";
+      owned.style.borderRadius = "999px";
+      owned.style.fontSize = "9.5px";
+      owned.style.letterSpacing = "0.04em";
+      owned.textContent = "OWNED";
+      media.appendChild(owned);
+    }
+    const dir = row.momentum_pct > 0.5 ? "up" : row.momentum_pct < -0.5 ? "down" : "flat";
+    const badge = document.createElement("div");
+    badge.className = `performer-tile__gain performer-tile__gain--${dir}`;
+    badge.textContent = `${row.momentum_pct >= 0 ? "▲" : "▼"} ${Math.abs(row.momentum_pct).toFixed(1)}%`;
+    media.appendChild(badge);
+    tile.appendChild(media);
+
+    const body = document.createElement("div");
+    body.className = "performer-tile__body";
+    body.innerHTML = `
+      <div class="performer-tile__title">${card.title}</div>
+      <div class="performer-tile__meta">${row.reason}</div>
+    `;
+    tile.appendChild(body);
+    strip.appendChild(tile);
+  });
+  root.appendChild(strip);
+  return root;
+}
+
 export function GrailsWidget(grails) {
   const card = document.createElement("div");
   card.className = "widget-card";

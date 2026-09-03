@@ -55,7 +55,9 @@ historical date, the same `grail_estimate()` every card page uses, replayed
 over time rather than a fabricated smooth line. The by-sport/by-player
 breakdown (`GET /api/collection/breakdown`) is the same portfolio read at a
 different grouping. Card-level is the existing Card Market Terminal.
-Portfolio-level, sport-level and player-level are new (`app/portfolio.py`).
+Portfolio-level, sport-level and player-level are new (`app/portfolio.py`), and
+so is Discover (`GET /api/discover`) — real momentum across the catalog,
+reasoned against the owned portfolio rather than a generic "trending" list.
 
 ## Lifecycle → current build status
 
@@ -66,7 +68,7 @@ Checking the actual repo against the full lifecycle, honestly:
 | **Own** | Built | Collection, `POST /api/collection` (Scan+Add) |
 | **Track** | Built | Home portfolio value graph, Best Performing Cards, by-sport/by-player breakdown (`app/portfolio.py`) |
 | **Value** | Built | Grail Estimate/Rating (`valuation.py`), Market Trends ticker |
-| **Discover** | Partial | Market page, Suggested Pickups — catalog-only, no personalized/network discovery yet |
+| **Discover** | Built | Home "Discover" — real market movers (`GET /api/discover`), ranked by momentum and reasoned against the owned portfolio (same player/product/sport, or "in your collection"). Still catalog-only, not network/social discovery. |
 | **Analyze** | Partial | Grade tabs, confidence/range/market-read, portfolio breakdown by sport/player — no comps-table drill-down yet |
 | **Trade** | Preview | Trade Table is a real builder over real Collection data, but only against one sample opponent — not a live matched trade between two accounts |
 | **Buy / Sell** | Not built | Buttons present, intentionally inert — HANDOFF.md §17's build order defers commerce until Collection + Intelligence are excellent |

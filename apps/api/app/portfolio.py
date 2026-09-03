@@ -96,3 +96,49 @@ def breakdown(items, group_by: str) -> list[dict]:
         })
     out.sort(key=lambda g: g["total_value"] or -1, reverse=True)
     return out
+
+
+def discover_movers(collection, card_summaries: list[dict]) -> list[dict]:
+    """Discover: real market momentum, personalized to what's already owned —
+    distinct from Best Performing Cards (owned-only, gain vs. cost basis) and
+    Suggested Pickups (unowned-only, no momentum ranking). See
+    docs/POSITIONING.md's lifecycle table (Discover stage).
+
+    card_summaries: output of main._card_summary() for the whole catalog.
+    Ranked by |momentum_pct| — a card with no momentum data yet (too few
+    sales, see valuation.grail_estimate) is excluded rather than ranked with
+    a fabricated 0, same "sparse data stays sparse" rule as everywhere else.
+    """
+    owned_ids = {inst.card_id for inst in collection}
+    by_id = {s["card_id"]: s for s in card_summaries}
+    owned = [by_id[cid] for cid in owned_ids if cid in by_id]
+    owned_players = {s["player"] for s in owned}
+    owned_sports = {s["sport"] for s in owned}
+    owned_products = {(s["manufacturer"], s["product"]) for s in owned}
+
+    out = []
+    for s in card_summaries:
+        momentum = s["estimate"].get("momentum_pct")
+        if momentum is None:
+            continue
+        is_owned = s["card_id"] in owned_ids
+        if is_owned:
+            relevance, reason = "owned", "In your collection"
+        elif s["player"] in owned_players:
+            relevance, reason = "player", f"You collect {s['player']} — related mover"
+        elif (s["manufacturer"], s["product"]) in owned_products:
+            relevance, reason = "product", f"You own other {s['manufacturer']} {s['product']} cards"
+        elif s["sport"] in owned_sports:
+            relevance, reason = "sport", f"You collect {s['sport'].lower()} cards"
+        else:
+            relevance, reason = "catalog", "Notable market mover"
+        out.append({
+            "card": s,
+            "owned": is_owned,
+            "momentum_pct": momentum,
+            "relevance": relevance,
+            "reason": reason,
+        })
+
+    out.sort(key=lambda x: abs(x["momentum_pct"]), reverse=True)
+    return out
