@@ -23,17 +23,19 @@ Open `http://127.0.0.1:8000`.
 
 - `app/models.py` — CARD_MASTER catalog (`CARDS`, 8 demo cards across basketball/
   soccer/baseball), the demo user's owned copies (`COLLECTION`), and a sample second
-  collector's inventory (`OPPONENT_COLLECTION`, Trade Table demo only). Only
-  `mj-scoring-kings-5` ships with seeded market history; the rest deliberately start
-  with zero sales. Each card carries `primary_color`/`secondary_color`/`jersey_number`
-  — inputs to the generated card art, not photo metadata (see "Card art" below).
+  collector's inventory (`OPPONENT_COLLECTION`, Trade Table demo only). Each card
+  carries `primary_color`/`secondary_color`/`jersey_number` — inputs to the generated
+  card art, not photo metadata (see "Card art" below).
 - `app/db.py` — SQLite transaction store (`sales`, `refresh_log`); fixed a schema bug
   from the scaffold (see `docs/ARCHITECTURE.md` section E).
 - `app/service.py` — source-adapter orchestration (`refresh`) and rollup (`trend`,
   now grade-aware) built on the scaffold.
 - `app/sources/` — adapter pattern (seed / eBay / PSA / Fanatics), unchanged from the
   scaffold. `ENABLE_FANATICS_PUBLIC` defaults to `false` in `.env.example` so local dev
-  doesn't make outbound calls; flip it on deliberately.
+  doesn't make outbound calls; flip it on deliberately. `seed.py`'s `SEED_BY_CARD` now
+  holds real completed-sale data for all 8 catalog cards, looked up by hand through
+  PSA's Auction Prices Realized (see "Market data provenance" below) rather than
+  invented — replaces the single-card placeholder dataset from earlier milestones.
 - `app/valuation.py` — `grail_estimate()` and `grail_rating()`: the only place
   transactions become an estimate or a G rating, including the spec's editorial-override
   path for historically significant cards with too little market data to score on the
@@ -65,6 +67,9 @@ GET  /api/cards/{id}/trend          transaction-level sales + rollup metrics
                                     (?grade= to inspect a different grade tab)
 POST /api/cards/{id}/refresh        run source adapters now
 GET  /api/cards/{id}/refresh-log    adapter run history
+GET  /api/comp-sources              source list for the manual "Add Comp" form
+POST /api/cards/{id}/comps          log a manually-looked-up real sale (unverified
+                                    until audited; see "Market data provenance")
 GET  /api/collection                demo CARD_INSTANCE list, joined to CARD_MASTER
 POST /api/collection                add an instance (Scan+Add's real endpoint;
                                     in-memory only, resets on restart)
@@ -74,6 +79,30 @@ GET  /api/grails                    catalog cards currently carrying a G badge
 GET  /api/suggested-pickups         rule-based recommendations from the owned/unowned split
 GET  /api/trade/demo                Trade Table demo pairing (you vs. a sample opponent)
 ```
+
+## Market data provenance
+
+None of eBay/PSA/Heritage/Card Ladder/Sports Card Investor have a free,
+ToS-compliant automated path to completed-sale data — see
+`docs/ARCHITECTURE.md` section E. Two real (not automated-scraper) paths exist
+instead:
+
+1. **`POST /api/cards/{id}/comps`** — anyone can log a real sale they looked up
+   themselves. Saves as unverified (gray point on the ticker) until audited.
+2. **`app/sources/seed.py`'s `SEED_BY_CARD`** — the current dataset for all 8
+   catalog cards, looked up by hand through PSA's Auction Prices Realized
+   (a licensed product that itself aggregates eBay/Fanatics Collect/Goldin
+   Auctions/etc.), via an authenticated PSA account. Each card's `source_url`
+   points at the PSA page it came from. Saves as verified — PSA APR is a
+   licensed data business, not a self-report, so it gets the stronger
+   provenance tier. An attempted direct eBay lookup (even through a real,
+   logged-in, human-driven browser session) was blocked by eBay's own bot
+   detection with a CAPTCHA wall before any data could be read — confirming
+   there's no automated path there regardless of login state.
+
+Both paths write into the exact same `sales` table and schema — there's no
+structural difference between "real data I looked up" and "real data an
+adapter fetched," only the `verified` flag and how it got there.
 
 ## Why no framework
 

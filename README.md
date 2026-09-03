@@ -39,10 +39,13 @@ pickups, a Trade Table demo). What's still a preview rather than a finished feat
   Terminal + Scan/Add are excellent"). Buttons are present and clickable so the flow
   is visible, but nothing settles a transaction yet — that's the Marketplace milestone.
 - **Auth / multiple users** — one seeded demo collector, no accounts yet (Phase 1).
-- **Catalog size** — 8 demo cards, one with real seeded market history. Small on
-  purpose: every number shown is honestly computed from what's actually there, never
-  padded to look fuller (see `docs/ARCHITECTURE.md` section E and the "no fake
-  precision" principle in `handoff/HANDOFF.md` §6).
+- **Catalog size** — 8 demo cards, all with real market history (looked up by hand
+  through PSA's Auction Prices Realized, since none of eBay/PSA/Heritage/Card Ladder/
+  Sports Card Investor have a free automated path to this data — see
+  `apps/api/README.md` "Market data provenance"). Small catalog on purpose: every
+  number shown is honestly computed from what's actually there, never padded to look
+  fuller (see `docs/ARCHITECTURE.md` section E and the "no fake precision" principle
+  in `handoff/HANDOFF.md` §6).
 - **Card art is generated, not photographed** — every card face is rendered by
   `apps/api/static/js/components/CardArt.js` (team-color gradient, jersey number,
   player name) instead of a photo. Real card scans are the manufacturer's/

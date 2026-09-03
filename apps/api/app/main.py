@@ -19,11 +19,11 @@ from .valuation import grail_estimate, grail_rating
 
 load_dotenv()
 
-# Only cards with a real reference dataset get seeded on startup — every other
-# CARD_MASTER intentionally starts with zero sales so its estimate/rating render the
-# genuine "insufficient data" states instead of borrowed numbers. See HANDOFF.md
-# section 6 ("no fake precision") and docs/ARCHITECTURE.md section E.
-SEEDED_CARD_IDS = {"mj-scoring-kings-5"}
+# Every card is seeded on startup, but SeedAdapter (app/sources/seed.py) only
+# has real data for cards actually looked up — everything else gets an empty
+# list back and stays at zero sales, rendering the genuine "insufficient data"
+# state instead of a borrowed number. See HANDOFF.md section 6 ("no fake
+# precision") and docs/ARCHITECTURE.md section E.
 
 # No source here has a free, ToS-compliant scraping path for arbitrary cards —
 # eBay sold data requires an approved Marketplace Insights token (Limited Release),
@@ -49,8 +49,7 @@ async def periodic_refresh(app):
     seconds = max(300, int(os.getenv("REFRESH_SECONDS", "900")))
     while True:
         for card in CARDS.values():
-            if card.card_id in SEEDED_CARD_IDS:
-                await refresh(card, include_seed=False)
+            await refresh(card, include_seed=False)
         await asyncio.sleep(seconds)
 
 
@@ -58,8 +57,7 @@ async def periodic_refresh(app):
 async def lifespan(app: FastAPI):
     init_db()
     for card in CARDS.values():
-        if card.card_id in SEEDED_CARD_IDS:
-            await refresh(card, include_seed=True)
+        await refresh(card, include_seed=True)
     task = asyncio.create_task(periodic_refresh(app))
     yield
     task.cancel()

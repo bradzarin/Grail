@@ -42,6 +42,43 @@ inconsistent as a demo catalog. Two changes:
    from 5 to 8 cards (added Messi, Ohtani, Zidane) so Best Performing Cards, Grails
    and Suggested Pickups all have enough real (unpadded) content to not look sparse.
 
+## Status update — real market data for all 8 cards, sourced by hand
+
+User request: use eBay/PSA/Heritage/Card Ladder/Sports Card Investor as sources
+for market trend data, "completely accurate from the data available." None of
+those five have a free, ToS-compliant automated path to completed-sale data —
+see section E below for the full breakdown per source. Two things followed
+from that:
+
+1. **`POST /api/cards/{id}/comps`** — a human who actually looked up a real
+   sale can log it. Real data, honestly marked unverified until audited.
+2. **A live one-off eBay lookup was attempted and blocked.** Per explicit
+   request, tried fetching eBay's own public "sold items" search — first
+   through the sandboxed preview browser, then through the user's real,
+   logged-in Chrome (via Claude in Chrome). Both were stopped by eBay's own
+   bot-detection CAPTCHA wall before any page content could be read, even
+   with a real logged-in session. Did not attempt to solve/bypass it — that's
+   a hard line regardless of context. This is now confirmed by direct
+   attempt, not just inferred from eBay's terms.
+3. **PSA's Auction Prices Realized worked.** It's a licensed product PSA
+   sells (an authenticated account, no bot-detection wall), and it itself
+   aggregates real completed sales from eBay, Fanatics Collect, and Goldin
+   Auctions. Looked up real sales history by hand for all 8 catalog cards and
+   replaced `app/sources/seed.py`'s single-card placeholder dataset with it —
+   `SEED_BY_CARD`, keyed by card id, each entry carrying the exact
+   (date, price, venue) rows PSA displayed and a `source_url` back to the PSA
+   page for re-auditing. Marked `verified: True` — PSA APR is licensed,
+   aggregated, dated data, not a self-report, so it earns the stronger
+   provenance tier `POST /api/cards/{id}/comps` entries don't get by default.
+
+Net effect: every catalog card now has real market history instead of just
+`mj-scoring-kings-5`. Two data-quality findings surfaced during lookup, noted
+in `seed.py` rather than silently corrected: the Shaq insert's real
+PSA-cataloged set name is "Ultra Power In The Key," not "Beam Team" (a
+nickname carried over from the handoff materials), and the Bellingham
+autograph's real manufacturer is Topps, not Panini (`models.py` left as-is —
+this update stayed scoped to market data, not catalog corrections).
+
 ## Environment note — stack deviation
 
 `HANDOFF.md` §20 recommends Next.js + TypeScript for the frontend and says the
