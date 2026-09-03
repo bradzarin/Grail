@@ -2,6 +2,8 @@ import { api } from "../api.js";
 import { mountShell } from "../shell.js";
 import { CollectionGrid } from "../components/CollectionGrid.js";
 import { GrailsWidget, SuggestedPickupsWidget, PerformerStrip } from "../components/Widgets.js";
+import { PortfolioChart } from "../components/PortfolioChart.js";
+import { BreakdownWidget } from "../components/BreakdownWidget.js";
 import { LoadingState, ErrorState } from "../components/States.js";
 import { money } from "../format.js";
 
@@ -45,25 +47,30 @@ function SummaryStrip(summary) {
 
 async function main() {
   const heroEl = document.getElementById("hero");
+  const chartEl = document.getElementById("portfolio-chart");
   const summaryEl = document.getElementById("summary");
   const performersEl = document.getElementById("performers");
+  const breakdownEl = document.getElementById("breakdown");
   const collectionEl = document.getElementById("collection-preview");
   const widgetsEl = document.getElementById("widgets");
 
   heroEl.appendChild(LoadingState("Loading your dashboard…"));
 
   try {
-    const [collection, summary, grails, pickups] = await Promise.all([
+    const [collection, summary, performance, grails, pickups] = await Promise.all([
       api.getCollection(),
       api.getCollectionSummary(),
+      api.getCollectionPerformance(),
       api.getGrails(),
       api.getSuggestedPickups(),
     ]);
 
     heroEl.innerHTML = "";
     heroEl.appendChild(Hero(summary));
+    chartEl.appendChild(PortfolioChart(performance));
     summaryEl.appendChild(SummaryStrip(summary));
     performersEl.appendChild(PerformerStrip(collection));
+    breakdownEl.appendChild(BreakdownWidget());
     collectionEl.appendChild(CollectionGrid(collection.slice(0, 4)));
     widgetsEl.appendChild(GrailsWidget(grails));
     widgetsEl.appendChild(SuggestedPickupsWidget(pickups));

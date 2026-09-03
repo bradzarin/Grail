@@ -40,12 +40,20 @@ Open `http://127.0.0.1:8000`.
   transactions become an estimate or a G rating, including the spec's editorial-override
   path for historically significant cards with too little market data to score on the
   composite alone (`docs/ARCHITECTURE.md` section J). Never fabricates a number when
-  there are no sales.
+  there are no sales. `grail_estimate()` takes an optional `as_of` so it can be replayed
+  at a past date — see `app/portfolio.py`.
+- `app/portfolio.py` — the portfolio-level lens on top of the same per-card estimate:
+  `performance_series()` reconstructs total portfolio value over time by replaying
+  `grail_estimate()` at each real sale date (not a fabricated trend line), and
+  `breakdown()` groups the collection by sport or by player. See `docs/POSITIONING.md`
+  — this is what makes Home read like a brokerage portfolio view, not just a card list.
 - `static/` — the frontend: plain HTML + CSS + native ES modules, no build step (see
   "Why no framework" below). `js/components/CardPanel.js` is the shared card
-  hero+estimate+ticker used by both Home's featured spotlight and the standalone Card
-  Market Terminal. `js/components/CardArt.js` generates every card face (see "Card
-  art" below) and is used everywhere a card renders — tiles, thumbnails, hero.
+  hero+estimate+ticker used by the standalone Card Market Terminal.
+  `js/components/PortfolioChart.js` and `BreakdownWidget.js` render the portfolio graph
+  and sport/player breakdown on Home. `js/components/CardArt.js` generates every card
+  face (see "Card art" below) and is used everywhere a card renders — tiles, thumbnails,
+  hero.
 
 ## Card art
 
@@ -74,6 +82,9 @@ GET  /api/collection                demo CARD_INSTANCE list, joined to CARD_MAST
 POST /api/collection                add an instance (Scan+Add's real endpoint;
                                     in-memory only, resets on restart)
 GET  /api/collection/summary        aggregate value / Grail count / status breakdown
+GET  /api/collection/performance    portfolio value over time, reconstructed from
+                                    real sales (the Home portfolio graph)
+GET  /api/collection/breakdown      ?by=sport|player — portfolio grouped by that lens
 GET  /api/market                    full catalog, ranked by real momentum
 GET  /api/grails                    catalog cards currently carrying a G badge
 GET  /api/suggested-pickups         rule-based recommendations from the owned/unowned split

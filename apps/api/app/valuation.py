@@ -20,8 +20,15 @@ def _parse(date_str: str) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
-def grail_estimate(sales_rows: list[dict]) -> dict:
-    """sales_rows: rows from db.sales(), ordered oldest -> newest."""
+def grail_estimate(sales_rows: list[dict], as_of: datetime | None = None) -> dict:
+    """sales_rows: rows from db.sales(), ordered oldest -> newest.
+
+    as_of: pretend "now" is this moment instead of the real current time —
+    used to replay what the estimate would have been at a past date (see
+    portfolio.py's performance-over-time reconstruction). Callers doing that
+    must also pre-filter sales_rows to sold_at <= as_of themselves; this
+    function only uses as_of as the anchor for the 30D/90D windows.
+    """
     if not sales_rows:
         return {
             "estimate": None,
@@ -37,7 +44,7 @@ def grail_estimate(sales_rows: list[dict]) -> dict:
             "market_read": "No completed sales recorded yet — estimate unavailable.",
         }
 
-    now = datetime.now(timezone.utc)
+    now = as_of or datetime.now(timezone.utc)
     parsed = [(r, _parse(r["sold_at"])) for r in sales_rows]
     parsed.sort(key=lambda t: t[1])
 

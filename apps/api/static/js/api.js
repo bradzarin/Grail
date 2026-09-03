@@ -20,6 +20,8 @@ export const api = {
   getTrend: (id, grade) => request(`/cards/${encodeURIComponent(id)}/trend${grade ? `?grade=${encodeURIComponent(grade)}` : ""}`),
   getCollection: () => request("/collection"),
   getCollectionSummary: () => request("/collection/summary"),
+  getCollectionPerformance: () => request("/collection/performance"),
+  getCollectionBreakdown: (by) => request(`/collection/breakdown?by=${encodeURIComponent(by)}`),
   getMarket: () => request("/market"),
   getGrails: () => request("/grails"),
   getSuggestedPickups: () => request("/suggested-pickups"),

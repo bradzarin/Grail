@@ -394,6 +394,79 @@ button.card-tile { font: inherit; padding: 0; width: 100%; }
 
 .period-toggle { display: flex; gap: 4px; }
 
+/* Portfolio performance chart (Home) */
+.portfolio-chart {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 22px 18px;
+  background: var(--canvas);
+  margin-bottom: 28px;
+}
+
+.portfolio-chart__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.portfolio-chart__value {
+  font-size: 32px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.portfolio-chart__change {
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.portfolio-chart__change.up { color: var(--up); }
+.portfolio-chart__change.down { color: var(--down); }
+.portfolio-chart__period { font-weight: 500; color: var(--ink-faint); margin-left: 2px; }
+
+/* Portfolio breakdown (by sport / by player) */
+.breakdown-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.breakdown-row:last-child { border-bottom: none; }
+
+.breakdown-row__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.breakdown-row__key { font-size: 13.5px; font-weight: 700; }
+.breakdown-row__value { font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.breakdown-row__bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--canvas-sunken);
+  overflow: hidden;
+}
+
+.breakdown-row__bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+}
+
+.breakdown-row__sub {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.breakdown-row__gain--up { color: var(--up); }
+.breakdown-row__gain--down { color: var(--down); }
+
 .period-toggle button {
   border: 1px solid var(--border-strong);
   background: var(--canvas);

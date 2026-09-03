@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from .db import init_db, insert_sale, refresh_logs, sales as sales_rows
 from .models import CARDS, COLLECTION, OPPONENT_COLLECTION, OPPONENT_NAME, CardInstance
+from .portfolio import breakdown as portfolio_breakdown, performance_series
 from .service import refresh, trend
 from .valuation import grail_estimate, grail_rating
 
@@ -268,6 +269,22 @@ def get_collection_summary():
             for status in sorted({i["status"] for i in items})
         },
     }
+
+
+@app.get("/api/collection/performance")
+def get_collection_performance():
+    """Reconstructed total portfolio value over time — the Robinhood/Coinbase-
+    style portfolio graph. See docs/POSITIONING.md and app/portfolio.py: this
+    replays the same grail_estimate() every card page uses at each real sale
+    date, it doesn't fabricate a smooth trend line."""
+    return performance_series(COLLECTION, CARDS)
+
+
+@app.get("/api/collection/breakdown")
+def get_collection_breakdown(by: str = "sport"):
+    if by not in ("sport", "player"):
+        raise HTTPException(422, "by must be 'sport' or 'player'")
+    return portfolio_breakdown(get_collection(), by)
 
 
 @app.get("/api/market")
