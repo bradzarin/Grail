@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Grail — Scan + Add</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar"></div>
+    <div class="main-col">
+      <div id="topbar"></div>
+      <main class="container">
+        <div class="page-header">
+          <h1>Scan + Add</h1>
+          <p>This demo has no camera/vision model — pick the card you're "scanning" from the catalog below. The pipeline after identification (Card Master match → Card Instance → valuation → Grail Rating → Collection) is real.</p>
+        </div>
+        <div id="scan-root"></div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="/static/js/pages/scan.js"></script>
+</body>
+</html>

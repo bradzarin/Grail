@@ -11,7 +11,8 @@ import math
 import statistics
 from datetime import datetime, timedelta, timezone
 
-GRAIL_RATING_VERSION = "1.0.0"
+GRAIL_RATING_VERSION = "1.1.0"
+EDITORIAL_OVERRIDE_THRESHOLD = 90
 
 
 def _parse(date_str: str) -> datetime:
@@ -134,18 +135,26 @@ def grail_rating(card, estimate: dict) -> dict:
     )
 
     if composite >= 90:
-        band = "GRAIL"
+        band, band_source = "GRAIL", "composite"
     elif composite >= 80:
-        band = "ELITE"
+        band, band_source = "ELITE", "composite"
     elif composite >= 70:
-        band = "NOTABLE"
+        band, band_source = "NOTABLE", "composite"
+    elif significance >= EDITORIAL_OVERRIDE_THRESHOLD:
+        # Spec override path (MARKETPLACE_TRADE_AUCTION_SPEC.md, "Grail Rating
+        # definition direction"): a historically important card can qualify on
+        # significance alone even with too little market data to earn it on
+        # the composite. Capped at ELITE, never the market-driven GRAIL band,
+        # and always flagged so the override is auditable, not silently blended in.
+        band, band_source = "ELITE", "editorial_override"
     else:
-        band = None
+        band, band_source = None, "composite"
 
     return {
         "version": GRAIL_RATING_VERSION,
         "composite": composite,
         "band": band,
+        "band_source": band_source,
         "dimensions": {
             "value": round(value, 1),
             "demand": round(demand, 1),

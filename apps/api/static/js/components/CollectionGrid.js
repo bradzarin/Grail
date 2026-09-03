@@ -28,7 +28,7 @@ export function CollectionGrid(items) {
     media.className = "card-tile__media";
     const badges = document.createElement("div");
     badges.className = "card-tile__badges";
-    badges.appendChild(StatusBadge(item.status));
+    if (item.status) badges.appendChild(StatusBadge(item.status));
     const g = GBadge(card.rating);
     if (g) badges.appendChild(g);
     media.appendChild(badges);
@@ -39,7 +39,7 @@ export function CollectionGrid(items) {
     body.className = "card-tile__body";
     body.innerHTML = `
       <div class="card-tile__title">${card.title}</div>
-      <div class="card-tile__meta">${card.year} ${card.manufacturer} ${card.product} · ${item.grade}</div>
+      <div class="card-tile__meta">${card.year} ${card.manufacturer} ${card.product} · ${item.grade || card.grade}</div>
     `;
     const valueRow = document.createElement("div");
     valueRow.className = "card-tile__value";

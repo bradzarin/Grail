@@ -5,6 +5,23 @@ began: proposed repo structure, component map, data model/API map, first three m
 issues found in the existing scaffold, and the marketplace extension points the identity/
 portfolio/intelligence substrate needs to leave open.
 
+## Status update — depth pass beyond Milestone 1's original scope
+
+The first pass shipped literally Milestone 1 (Collection + Card Terminal only, per
+`handoff/CLAUDE_START_PROMPT.md`'s "do not begin with commerce"). Reviewing it against
+the handoff's own reference images (`assets/full_dashboard_reference.png`,
+`assets/card_detail_market_trend_reference.png`, `assets/trade_table_mobile_reference.png`)
+showed it was too shallow relative to what those references specify — a sidebar-shell
+app with Home/Market/Trade/Scan/Wants/Alerts/Profile, grade tabs, population stats, a
+Trade Table, etc. This pass rebuilds the frontend to match that reference depth and
+extends the API accordingly (`/api/market`, `/api/grails`, `/api/suggested-pickups`,
+`/api/trade/demo`, `POST /api/collection`), while keeping the build-order discipline
+from HANDOFF.md §17: every new surface is either Collection/Intelligence (real, wired to
+`valuation.py`) or an explicitly-labeled Marketplace *preview* (Buy/Offer/Trade buttons
+are present and clickable, matching the reference UI, but do not settle anything —
+settlement is still Phase 4). See `apps/api/README.md` for the full endpoint list and
+which pieces are real vs. demo state.
+
 ## Environment note — stack deviation
 
 `HANDOFF.md` §20 recommends Next.js + TypeScript for the frontend and says the

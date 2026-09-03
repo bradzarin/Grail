@@ -34,11 +34,12 @@ async def refresh(card, include_seed=False):
             results.append({"source":adapter.name,"found":0,"inserted":0,"status":"error","detail":str(e)})
     return results
 
-def trend(card):
-    rows=sales(card.card_id, card.grade)
+def trend(card, grade=None):
+    grade = grade or card.grade
+    rows=sales(card.card_id, grade)
     prices=[float(r["price"]) for r in rows]
     if not prices:
-        return {"card_id":card.card_id,"grade":card.grade,"sales":[],"metrics":{}}
+        return {"card_id":card.card_id,"grade":grade,"sales":[],"metrics":{}}
     recent=prices[-min(10,len(prices)):]
     return {
         "card_id":card.card_id,

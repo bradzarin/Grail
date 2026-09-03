@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Grail — Card Market Terminal</title>
+  <title>The Grail — Profile</title>
   <link rel="stylesheet" href="/static/css/app.css" />
 </head>
 <body>
@@ -12,11 +12,14 @@
     <div class="main-col">
       <div id="topbar"></div>
       <main class="container">
-        <a href="/" class="back-link">← Back to Home</a>
-        <div id="terminal"></div>
+        <div class="page-header">
+          <h1>Profile</h1>
+          <p>Single demo collector — no auth in this build (docs/ARCHITECTURE.md, Phase 1).</p>
+        </div>
+        <div id="profile-root"></div>
       </main>
     </div>
   </div>
-  <script type="module" src="/static/js/pages/cardTerminal.js"></script>
+  <script type="module" src="/static/js/pages/profile.js"></script>
 </body>
 </html>

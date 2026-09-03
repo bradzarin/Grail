@@ -1,6 +1,29 @@
 import { money, shortDate } from "../format.js";
 import { ConfidencePill } from "./Badges.js";
 
+const CONFIDENCE_POSITION = { LOW: 14, MEDIUM: 50, HIGH: 86 };
+
+function meterBar(confidence) {
+  const wrap = document.createElement("div");
+  wrap.style.position = "relative";
+  wrap.style.maxWidth = "220px";
+  const bar = document.createElement("div");
+  bar.className = "meter-bar";
+  wrap.appendChild(bar);
+  const marker = document.createElement("div");
+  marker.style.position = "absolute";
+  marker.style.top = "-3px";
+  marker.style.width = "12px";
+  marker.style.height = "12px";
+  marker.style.borderRadius = "50%";
+  marker.style.background = "#fff";
+  marker.style.border = "2px solid var(--ink)";
+  marker.style.left = `${CONFIDENCE_POSITION[confidence] ?? 14}%`;
+  marker.style.transform = "translateX(-50%)";
+  wrap.appendChild(marker);
+  return wrap;
+}
+
 // Renders the estimate/range/confidence hierarchy from HANDOFF.md section 6.
 // Never fills in a number when the API says there isn't enough data (section E).
 export function GrailEstimatePanel(estimate) {
@@ -13,8 +36,13 @@ export function GrailEstimatePanel(estimate) {
         <span class="estimate-panel__value" style="font-size:20px;color:var(--ink-faint)">Estimate unavailable</span>
         ${ConfidencePill("LOW").outerHTML}
       </div>
-      <div class="market-read">${estimate.market_read}</div>
     `;
+    div.appendChild(meterBar("LOW"));
+    const read = document.createElement("div");
+    read.className = "market-read";
+    read.style.marginTop = "14px";
+    read.textContent = estimate.market_read;
+    div.appendChild(read);
     return div;
   }
 
@@ -23,9 +51,11 @@ export function GrailEstimatePanel(estimate) {
   top.innerHTML = `<span class="estimate-panel__value">${money(estimate.estimate)}</span>`;
   top.appendChild(ConfidencePill(estimate.confidence));
   div.appendChild(top);
+  div.appendChild(meterBar(estimate.confidence));
 
   const range = document.createElement("div");
   range.className = "estimate-panel__range";
+  range.style.marginTop = "10px";
   range.textContent = `Likely range ${money(estimate.range_low)} – ${money(estimate.range_high)}`;
   div.appendChild(range);
 

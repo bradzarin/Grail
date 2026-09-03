@@ -3,19 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Grail — Collection</title>
+  <title>The Grail — Home</title>
   <link rel="stylesheet" href="/static/css/app.css" />
 </head>
 <body>
-  <div id="nav"></div>
-  <main class="container">
-    <div class="page-header">
-      <h1>My Collection</h1>
-      <p>Know what you own. Find what you love. Trade what you don't.</p>
+  <div class="app-shell">
+    <div id="sidebar"></div>
+    <div class="main-col">
+      <div id="topbar"></div>
+      <main class="container">
+        <div id="featured"></div>
+        <div id="widgets" class="widget-row"></div>
+      </main>
     </div>
-    <div id="summary"></div>
-    <div id="grid"></div>
-  </main>
-  <script type="module" src="/static/js/pages/collectionHome.js"></script>
+  </div>
+  <script type="module" src="/static/js/pages/home.js"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 import { api } from "../api.js";
-import { Nav } from "../components/Nav.js";
+import { mountShell } from "../shell.js";
 import { CollectionGrid } from "../components/CollectionGrid.js";
 import { withState } from "../components/States.js";
 import { money } from "../format.js";
 
-document.getElementById("nav").appendChild(Nav("collection"));
+mountShell("collection");
 
 function SummaryStrip(summary) {
   const div = document.createElement("div");
