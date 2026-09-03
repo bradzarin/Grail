@@ -85,7 +85,9 @@ def _card_summary(card):
         "autograph": card.autograph,
         "relic": card.relic,
         "tags": list(card.tags),
-        "front_image": card.front_image,
+        "jersey_number": card.jersey_number,
+        "primary_color": card.primary_color,
+        "secondary_color": card.secondary_color,
         "estimate": est,
         "rating": rating,
     }

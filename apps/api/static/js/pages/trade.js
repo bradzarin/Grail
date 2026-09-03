@@ -1,15 +1,11 @@
 import { api } from "../api.js";
 import { mountShell } from "../shell.js";
-import { CardImage } from "../components/CardImage.js";
+import { CardArt } from "../components/CardArt.js";
 import { money } from "../format.js";
 import { LoadingState, ErrorState } from "../components/States.js";
 import { showToast } from "../toast.js";
 
 mountShell("trade");
-
-function initialsFor(title) {
-  return title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
 
 function estimateOf(item) {
   return item.card.estimate.estimate || 0;
@@ -46,7 +42,7 @@ function renderSide(label, items, selected, onToggle) {
     const thumb = document.createElement("a");
     thumb.className = "thumb";
     thumb.href = `/card.html?id=${encodeURIComponent(item.card.card_id)}`;
-    thumb.appendChild(CardImage({ src: item.card.front_image, alt: item.card.title, initials: initialsFor(item.card.title) }));
+    thumb.appendChild(CardArt(item.card));
     row.appendChild(thumb);
 
     const info = document.createElement("div");

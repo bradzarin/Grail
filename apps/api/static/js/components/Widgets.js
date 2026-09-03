@@ -1,46 +1,71 @@
 import { money } from "../format.js";
-import { CardImage } from "./CardImage.js";
-
-function initialsFor(title) {
-  return title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
+import { CardArt } from "./CardArt.js";
 
 function thumb(card) {
   const a = document.createElement("a");
   a.className = "thumb";
   a.href = `/card.html?id=${encodeURIComponent(card.card_id)}`;
-  a.appendChild(CardImage({ src: card.front_image, alt: card.title, initials: initialsFor(card.title) }));
+  a.appendChild(CardArt(card));
   return a;
 }
 
-export function CollectionWidget(summary, items) {
-  const card = document.createElement("div");
-  card.className = "widget-card";
-  card.innerHTML = `<div class="widget-card__head"><h3>My Collection</h3><a href="/collection.html">View all</a></div>`;
+// Best Performing Cards: real unrealized gain (current estimate vs. what was
+// actually paid), not a vanity ranking. Cards with no market data yet can't be
+// ranked and are excluded rather than shown with a fabricated 0%.
+export function PerformerStrip(items) {
+  const withGain = items
+    .map((i) => {
+      const est = i.card.estimate.estimate;
+      if (!est || !i.acquired_price) return null;
+      return { item: i, gainPct: ((est - i.acquired_price) / i.acquired_price) * 100 };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.gainPct - a.gainPct);
 
-  const stats = document.createElement("div");
-  stats.className = "collection-widget__stats";
-  stats.innerHTML = `
-    <div><b>${summary.card_count}</b><span>Cards</span></div>
-    <div><b>${summary.grail_count}</b><span>Grails</span></div>
-    <div><b>${summary.total_estimated_value !== null ? money(summary.total_estimated_value) : "—"}</b><span>Est. Value</span></div>
-  `;
-  card.appendChild(stats);
+  const root = document.createElement("div");
+  if (!withGain.length) {
+    root.appendChild((() => {
+      const div = document.createElement("div");
+      div.className = "state-block";
+      div.textContent = "No cards have enough market history yet to compute performance.";
+      return div;
+    })());
+    return root;
+  }
 
   const strip = document.createElement("div");
-  strip.className = "thumb-strip";
-  items.slice(0, 4).forEach((i) => strip.appendChild(thumb(i.card)));
-  if (items.length > 4) {
-    const more = document.createElement("div");
-    more.className = "thumb-more";
-    more.style.width = "48px";
-    more.style.height = "64px";
-    more.style.borderRadius = "6px";
-    more.textContent = `+${items.length - 4}`;
-    strip.appendChild(more);
-  }
-  card.appendChild(strip);
-  return card;
+  strip.className = "performer-strip";
+  withGain.forEach(({ item, gainPct }, idx) => {
+    const card = item.card;
+    const tile = document.createElement("a");
+    tile.className = "performer-tile";
+    tile.href = `/card.html?id=${encodeURIComponent(card.card_id)}`;
+
+    const media = document.createElement("div");
+    media.className = "performer-tile__media";
+    media.appendChild(CardArt(card));
+    const rank = document.createElement("div");
+    rank.className = "performer-tile__rank";
+    rank.textContent = String(idx + 1);
+    media.appendChild(rank);
+    const gainBadge = document.createElement("div");
+    const dir = gainPct > 0.5 ? "up" : gainPct < -0.5 ? "down" : "flat";
+    gainBadge.className = `performer-tile__gain performer-tile__gain--${dir}`;
+    gainBadge.textContent = `${gainPct >= 0 ? "▲" : "▼"} ${Math.abs(gainPct).toFixed(1)}%`;
+    media.appendChild(gainBadge);
+    tile.appendChild(media);
+
+    const body = document.createElement("div");
+    body.className = "performer-tile__body";
+    body.innerHTML = `
+      <div class="performer-tile__title">${card.title}</div>
+      <div class="performer-tile__meta">${money(item.acquired_price)} → ${money(card.estimate.estimate)}</div>
+    `;
+    tile.appendChild(body);
+    strip.appendChild(tile);
+  });
+  root.appendChild(strip);
+  return root;
 }
 
 export function GrailsWidget(grails) {

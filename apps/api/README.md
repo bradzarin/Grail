@@ -21,10 +21,12 @@ Open `http://127.0.0.1:8000`.
 
 ## Layout
 
-- `app/models.py` — CARD_MASTER catalog (`CARDS`, 5 demo cards), the demo user's owned
-  copies (`COLLECTION`), and a sample second collector's inventory (`OPPONENT_COLLECTION`,
-  Trade Table demo only). Only `mj-scoring-kings-5` ships with seeded market history;
-  the rest deliberately start with zero sales.
+- `app/models.py` — CARD_MASTER catalog (`CARDS`, 8 demo cards across basketball/
+  soccer/baseball), the demo user's owned copies (`COLLECTION`), and a sample second
+  collector's inventory (`OPPONENT_COLLECTION`, Trade Table demo only). Only
+  `mj-scoring-kings-5` ships with seeded market history; the rest deliberately start
+  with zero sales. Each card carries `primary_color`/`secondary_color`/`jersey_number`
+  — inputs to the generated card art, not photo metadata (see "Card art" below).
 - `app/db.py` — SQLite transaction store (`sales`, `refresh_log`); fixed a schema bug
   from the scaffold (see `docs/ARCHITECTURE.md` section E).
 - `app/service.py` — source-adapter orchestration (`refresh`) and rollup (`trend`,
@@ -40,7 +42,19 @@ Open `http://127.0.0.1:8000`.
 - `static/` — the frontend: plain HTML + CSS + native ES modules, no build step (see
   "Why no framework" below). `js/components/CardPanel.js` is the shared card
   hero+estimate+ticker used by both Home's featured spotlight and the standalone Card
-  Market Terminal.
+  Market Terminal. `js/components/CardArt.js` generates every card face (see "Card
+  art" below) and is used everywhere a card renders — tiles, thumbnails, hero.
+
+## Card art
+
+Every card face is generated SVG (`js/components/CardArt.js`), not a photo — real
+card-manufacturer photography is copyrighted, and this repo has no license for it
+(the handoff itself flags this: "use properly licensed/authorized imagery in
+production," `HANDOFF.md` §14/15). Generation is deterministic from
+`primary_color`/`secondary_color`/`jersey_number`/`player`/`team`, so it's also what
+makes the catalog look like one coherent product instead of mismatched stock photos.
+A production build swaps in licensed photography behind this same component — nothing
+downstream needs to change.
 
 ## API
 

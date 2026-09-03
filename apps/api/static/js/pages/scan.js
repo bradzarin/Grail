@@ -1,15 +1,11 @@
 import { api } from "../api.js";
 import { mountShell } from "../shell.js";
-import { CardImage } from "../components/CardImage.js";
+import { CardArt } from "../components/CardArt.js";
 import { LoadingState, ErrorState } from "../components/States.js";
 import { money } from "../format.js";
 import { showToast } from "../toast.js";
 
 mountShell("scan");
-
-function initialsFor(title) {
-  return title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
 
 async function main() {
   const root = document.getElementById("scan-root");
@@ -40,7 +36,7 @@ async function main() {
     tile.style.border = "1px solid var(--border)";
     const media = document.createElement("div");
     media.className = "card-tile__media";
-    media.appendChild(CardImage({ src: card.front_image, alt: card.title, initials: initialsFor(card.title) }));
+    media.appendChild(CardArt(card));
     tile.appendChild(media);
     const body = document.createElement("div");
     body.className = "card-tile__body";

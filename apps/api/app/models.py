@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 
@@ -23,10 +23,16 @@ class CardSpec:
     parallel: Optional[str] = None
     serial_number: Optional[str] = None
     print_run: Optional[int] = None
+    jersey_number: Optional[str] = None
     rookie: bool = False
     autograph: bool = False
     relic: bool = False
-    front_image: str = ""
+    # Card art is generated (js/components/CardArt.js), not photographed — real card
+    # scans are the manufacturer's/photographer's copyrighted work, and the handoff
+    # itself flags this (HANDOFF.md section 14/15: "use properly licensed/authorized
+    # imagery in production"). These two hex colors drive that generated art.
+    primary_color: str = "#6d5bff"
+    secondary_color: str = "#17c3d6"
     # Editorial input to Grail Rating's Significance dimension — see valuation.py
     # and docs/ARCHITECTURE.md section J on why this is seeded, not computed.
     significance_score: int = 50
@@ -54,7 +60,9 @@ CARDS: dict[str, CardSpec] = {
         player="Michael Jordan",
         team="Chicago Bulls",
         card_number="5",
-        front_image="/static/assets/cards/mj_scoring_kings_actual.png",
+        jersey_number="23",
+        primary_color="#CE1141",
+        secondary_color="#0B0B0B",
         significance_score=92,
         population=1400,
         population_psa10=140,
@@ -75,8 +83,10 @@ CARDS: dict[str, CardSpec] = {
         player="Michael Jordan",
         team="Chicago Bulls",
         card_number="57",
+        jersey_number="23",
+        primary_color="#CE1141",
+        secondary_color="#1B1B1B",
         rookie=True,
-        front_image="/static/assets/cards/michael_jordan_fleer.jpg",
         significance_score=98,
         released="1986",
         tags=("Rookie Card", "Hobby Icon", "Key to the Set"),
@@ -94,7 +104,9 @@ CARDS: dict[str, CardSpec] = {
         player="Shaquille O'Neal",
         team="Orlando Magic",
         card_number="7",
-        front_image="/static/assets/cards/shaq_beam_team.jpg",
+        jersey_number="32",
+        primary_color="#0077C0",
+        secondary_color="#0B0B0B",
         significance_score=74,
         released="1993",
         tags=("Insert", "90s Icon"),
@@ -112,12 +124,14 @@ CARDS: dict[str, CardSpec] = {
         player="Lamine Yamal",
         team="FC Barcelona",
         card_number="—",
+        jersey_number="19",
+        primary_color="#A50044",
+        secondary_color="#004D98",
         parallel="Refractor",
         serial_number="/298",
         print_run=298,
         autograph=True,
         rookie=True,
-        front_image="/static/assets/cards/lamine_yamal_auto_298.jpg",
         significance_score=81,
         released="2024",
         tags=("Rookie Card", "On-Card Auto", "Rising Demand"),
@@ -135,13 +149,76 @@ CARDS: dict[str, CardSpec] = {
         player="Jude Bellingham",
         team="Real Madrid",
         card_number="—",
+        jersey_number="5",
+        primary_color="#FEBE10",
+        secondary_color="#1B1B1B",
         serial_number="/25",
         print_run=25,
         autograph=True,
-        front_image="/static/assets/cards/jude_bellingham_auto_25.jpg",
         significance_score=70,
         released="2023",
         tags=("Low Print Run", "On-Card Auto"),
+    ),
+    "messi-kaboom": CardSpec(
+        card_id="messi-kaboom",
+        query='"Donruss Soccer" "Kaboom" "Lionel Messi"',
+        grade="Raw",
+        title="Lionel Messi Panini Donruss Kaboom!",
+        sport="Soccer",
+        year="2023-24",
+        manufacturer="Panini",
+        product="Donruss",
+        set_name="Kaboom!",
+        player="Lionel Messi",
+        team="Inter Miami CF",
+        card_number="—",
+        jersey_number="10",
+        primary_color="#F7B5CD",
+        secondary_color="#231F20",
+        significance_score=85,
+        released="2023",
+        tags=("Insert", "Global Icon", "High Demand"),
+    ),
+    "ohtani-rookie": CardSpec(
+        card_id="ohtani-rookie",
+        query='"2018 Topps Chrome Update" "Shohei Ohtani" rookie',
+        grade="Raw",
+        title="Shohei Ohtani 2018 Topps Chrome Update Rookie",
+        sport="Baseball",
+        year="2018",
+        manufacturer="Topps",
+        product="Chrome Update",
+        set_name="Base",
+        player="Shohei Ohtani",
+        team="Los Angeles Angels",
+        card_number="—",
+        jersey_number="17",
+        primary_color="#BA0021",
+        secondary_color="#003263",
+        rookie=True,
+        significance_score=95,
+        released="2018",
+        tags=("Rookie Card", "Two-Way Star", "Modern Icon"),
+    ),
+    "zidane-legend": CardSpec(
+        card_id="zidane-legend",
+        query='"Panini" "Zinedine Zidane" legends',
+        grade="Raw",
+        title="Zinedine Zidane Panini Legends",
+        sport="Soccer",
+        year="2022-23",
+        manufacturer="Panini",
+        product="Obsidian",
+        set_name="Legends",
+        player="Zinedine Zidane",
+        team="Real Madrid",
+        card_number="—",
+        jersey_number="5",
+        primary_color="#1B1B1B",
+        secondary_color="#FEBE10",
+        significance_score=90,
+        released="2022",
+        tags=("Legend", "Hobby Icon"),
     ),
 }
 
@@ -160,13 +237,15 @@ class CardInstance:
 
 # Demo collection for a single seeded user. Phase 1 replaces this with real
 # per-user persistence (docs/ARCHITECTURE.md, Milestone 2) — the shape does not change.
-# Two catalog cards (Shaq, Bellingham) are deliberately left unowned so Suggested
-# Pickups has something real to recommend and the Trade Table demo has a sample
-# opponent inventory, instead of both being empty/fabricated.
+# Three catalog cards (Shaq, Bellingham, Zidane) are deliberately left unowned so
+# Suggested Pickups has something real to recommend and the Trade Table demo has a
+# sample opponent inventory, instead of both being empty/fabricated.
 COLLECTION: list[CardInstance] = [
     CardInstance("inst-1", "mj-scoring-kings-5", "PSA 8", 1470.0, "2025-11-20", "PC"),
     CardInstance("inst-2", "jordan-fleer-86-57", "Raw", 3200.0, "2024-06-01", "PC"),
     CardInstance("inst-3", "yamal-topps-chrome-auto-298", "Raw", 640.0, "2025-08-02", "OPEN"),
+    CardInstance("inst-4", "messi-kaboom", "Raw", 145.0, "2025-05-10", "PC"),
+    CardInstance("inst-5", "ohtani-rookie", "Raw", 520.0, "2024-09-22", "PC"),
 ]
 
 # Sample second collector's inventory, for the Trade Table preview only (see
@@ -175,4 +254,5 @@ OPPONENT_NAME = "Marcus T."
 OPPONENT_COLLECTION: list[CardInstance] = [
     CardInstance("opp-1", "shaq-beam-team-7", "Raw", 210.0, "2025-01-14", "TRADE"),
     CardInstance("opp-2", "bellingham-tier-one-auto-25", "Raw", 890.0, "2025-03-30", "TRADE"),
+    CardInstance("opp-3", "zidane-legend", "Raw", 300.0, "2025-02-02", "TRADE"),
 ]

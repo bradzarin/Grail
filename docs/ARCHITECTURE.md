@@ -22,6 +22,26 @@ are present and clickable, matching the reference UI, but do not settle anything
 settlement is still Phase 4). See `apps/api/README.md` for the full endpoint list and
 which pieces are real vs. demo state.
 
+## Status update — Home restructured as a hub; generated card art
+
+User feedback on the depth pass above: Home was still too dominated by one featured
+card's Market Trends terminal (essentially a second Card Market Terminal), and the
+card imagery (the founder's own reference photos, reused across every tile) looked
+inconsistent as a demo catalog. Two changes:
+
+1. **Home is now a hub, not a drill-down.** The single-card spotlight is gone.
+   Home = hero brand band → collection stat row → **Best Performing Cards** (new —
+   ranked by real unrealized gain, `current estimate − acquired price`, computed
+   per instance; cards without market data are excluded rather than shown with a
+   fabricated 0%) → a Collection preview grid → Grails / Suggested Pickups. The
+   single-card terminal view lives only on `card.html`, reached by clicking through.
+2. **Card art is now generated, not photographed** — see `apps/api/README.md`
+   ("Card art" section) for the full reasoning. In short: real card photography is
+   copyrighted, this repo has no license for it, and the handoff's own text agrees
+   ("use properly licensed/authorized imagery in production"). The catalog also grew
+   from 5 to 8 cards (added Messi, Ohtani, Zidane) so Best Performing Cards, Grails
+   and Suggested Pickups all have enough real (unpadded) content to not look sparse.
+
 ## Environment note — stack deviation
 
 `HANDOFF.md` §20 recommends Next.js + TypeScript for the frontend and says the

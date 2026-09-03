@@ -1,13 +1,9 @@
-import { CardImage } from "./CardImage.js";
+import { CardArt } from "./CardArt.js";
 import { GBadge } from "./Badges.js";
 import { GrailEstimatePanel } from "./GrailEstimatePanel.js";
 import { MarketTicker } from "./MarketTicker.js";
 import { isWanted, toggleWant } from "../wants.js";
 import { showToast } from "../toast.js";
-
-function initialsFor(title) {
-  return title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
 
 function aboutText(card) {
   const bits = [];
@@ -35,7 +31,7 @@ export function CardPanel(card, trend, owned) {
   const left = document.createElement("div");
   const hero = document.createElement("div");
   hero.className = "terminal-hero";
-  hero.appendChild(CardImage({ src: card.front_image, alt: card.title, initials: initialsFor(card.title) }));
+  hero.appendChild(CardArt(card));
   left.appendChild(hero);
 
   const identity = document.createElement("div");

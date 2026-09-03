@@ -1,11 +1,7 @@
-import { CardImage } from "./CardImage.js";
+import { CardArt } from "./CardArt.js";
 import { StatusBadge, GBadge } from "./Badges.js";
 import { money } from "../format.js";
 import { EmptyState } from "./States.js";
-
-function initialsFor(title) {
-  return title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
 
 export function CollectionGrid(items) {
   const root = document.createElement("div");
@@ -32,7 +28,7 @@ export function CollectionGrid(items) {
     const g = GBadge(card.rating);
     if (g) badges.appendChild(g);
     media.appendChild(badges);
-    media.appendChild(CardImage({ src: card.front_image, alt: card.title, initials: initialsFor(card.title) }));
+    media.appendChild(CardArt(card));
     tile.appendChild(media);
 
     const body = document.createElement("div");

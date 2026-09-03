@@ -39,10 +39,18 @@ pickups, a Trade Table demo). What's still a preview rather than a finished feat
   Terminal + Scan/Add are excellent"). Buttons are present and clickable so the flow
   is visible, but nothing settles a transaction yet — that's the Marketplace milestone.
 - **Auth / multiple users** — one seeded demo collector, no accounts yet (Phase 1).
-- **Catalog size** — 5 demo cards with real local imagery, one with real seeded market
-  history. Small on purpose: every number shown is honestly computed from what's
-  actually there, never padded to look fuller (see `docs/ARCHITECTURE.md` section E
-  and the "no fake precision" principle in `handoff/HANDOFF.md` §6).
+- **Catalog size** — 8 demo cards, one with real seeded market history. Small on
+  purpose: every number shown is honestly computed from what's actually there, never
+  padded to look fuller (see `docs/ARCHITECTURE.md` section E and the "no fake
+  precision" principle in `handoff/HANDOFF.md` §6).
+- **Card art is generated, not photographed** — every card face is rendered by
+  `apps/api/static/js/components/CardArt.js` (team-color gradient, jersey number,
+  player name) instead of a photo. Real card scans are the manufacturer's/
+  photographer's copyrighted work; the handoff itself says to "use properly
+  licensed/authorized imagery in production" (`HANDOFF.md` §14/15), and this repo has
+  no license for Messi/Ohtani/Zidane/etc. card photography. The generated system also
+  makes the whole catalog look like one coherent product instead of mismatched stock
+  photos — production would swap in licensed photography behind the same component.
 - **Wants** — stored in the browser's `localStorage` for this demo, not the account.
 - **Trade Table** — a real interactive builder over real Collection data, paired
   against one sample opponent inventory. Not a live matched trade between two users.
