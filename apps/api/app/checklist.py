@@ -51,12 +51,26 @@ Current sources:
   Beckett News's downloadable XLSX
   (beckett.com/news/2025-26-o-pee-chee-hockey-cards). First hockey coverage
   in this registry.
+- upperdeck_golf_2024.json — every card in 2024 Upper Deck Golf (649 rows
+  across 19 real subsets), from Beckett News's downloadable XLSX
+  (beckett.com/news/2024-upper-deck-golf-cards). First golf coverage.
+- panini_prizm_nascar_2025.json — every card in 2025 Panini Prizm NASCAR
+  Racing (495 rows across 14 real subsets), from Beckett News's downloadable
+  XLSX (beckett.com/news/2025-panini-prizm-nascar-racing-cards). First
+  racing coverage.
+- panini_select_wwe_2023.json — every card in 2023 Panini Select WWE (790
+  rows across 16 real subsets — base tiered by arena level, autographed
+  memorabilia, several signature families), from Beckett News's downloadable
+  XLSX (beckett.com/news/2023-panini-select-wwe-wrestling-cards). First
+  wrestling coverage — added "Wrestling" to js/grades.js's SPORTS list to
+  match.
 
-Both of the last two follow the same per-sheet parsing pattern (a "N cards"
-line marks each real subset's start; app/data/ holds only the normalized
-{year, card_number, team, player, set_name, rookie, autograph} rows, not the
-original files or any of Beckett's own article text) — see apps/api/README.md
-"Bulk checklist" for what's worth pulling next from the same place."""
+All of the Beckett-sourced entries above follow the same per-sheet parsing
+pattern (a "N cards" line marks each real subset's start; app/data/ holds
+only the normalized {year, card_number, team, player, set_name, rookie,
+autograph} rows, not the original files or any of Beckett's own article
+text) — see apps/api/README.md "Bulk checklist" for what's worth pulling
+next from the same place."""
 
 from __future__ import annotations
 
@@ -98,6 +112,19 @@ SOURCES: tuple[BulkSource, ...] = (
         sport="Hockey",
         manufacturer="O-Pee-Chee",
         product="O-Pee-Chee",
+    ),
+    BulkSource(path="upperdeck_golf_2024.json", sport="Golf", manufacturer="Upper Deck", product="Upper Deck"),
+    BulkSource(
+        path="panini_prizm_nascar_2025.json",
+        sport="Racing",
+        manufacturer="Panini",
+        product="Prizm",
+    ),
+    BulkSource(
+        path="panini_select_wwe_2023.json",
+        sport="Wrestling",
+        manufacturer="Panini",
+        product="Select",
     ),
 )
 

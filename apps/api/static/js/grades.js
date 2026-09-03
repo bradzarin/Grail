@@ -11,4 +11,4 @@ export const GRADE_TABS = [
   "Other",
 ];
 
-export const SPORTS = ["Basketball", "Baseball", "Soccer", "Football", "Hockey", "Golf", "Racing", "Other"];
+export const SPORTS = ["Basketball", "Baseball", "Soccer", "Football", "Hockey", "Golf", "Racing", "Wrestling", "Other"];
