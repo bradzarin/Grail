@@ -162,6 +162,9 @@ img { max-width: 100%; display: block; }
   border-color: var(--ink);
 }
 
+.photo-upload-row { display: flex; gap: 8px; margin: 10px 0 0; }
+.photo-upload-btn { display: inline-block; }
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

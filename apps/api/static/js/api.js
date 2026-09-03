@@ -40,4 +40,14 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  uploadInstancePhoto: (instanceId, side, file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request(`/collection/${encodeURIComponent(instanceId)}/photo?side=${side}`, {
+      method: "POST",
+      body: form,
+    });
+  },
+  deleteInstancePhoto: (instanceId, side) =>
+    request(`/collection/${encodeURIComponent(instanceId)}/photo?side=${side}`, { method: "DELETE" }),
 };

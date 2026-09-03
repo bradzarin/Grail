@@ -223,16 +223,25 @@ CARDS: dict[str, CardSpec] = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass
 class CardInstance:
     """CARD_INSTANCE — a specific owned copy. References a CARD_MASTER by id; never
-    re-describes the card itself. See docs/ARCHITECTURE.md sections C and G."""
+    re-describes the card itself. See docs/ARCHITECTURE.md sections C and G.
+
+    front_image/back_image match HANDOFF.md section 12's data model directly — real
+    photos of this specific physical copy, uploaded via POST /api/collection/{id}/photo.
+    Not frozen like CardSpec: this is mutable per-owner state, and the upload endpoint
+    updates it in place. None until the owner actually uploads a photo — every card
+    renders through the generated CardArt system (js/components/CardArt.js) until then,
+    never a stock/borrowed image standing in for a specific real copy."""
     instance_id: str
     card_id: str
     grade: str
     acquired_price: float
     acquired_date: str
     status: str  # PC | TRADE | SELL | OPEN | PRIVATE | SOLD | PENDING
+    front_image: Optional[str] = None
+    back_image: Optional[str] = None
 
 
 # Demo collection for a single seeded user. Phase 1 replaces this with real

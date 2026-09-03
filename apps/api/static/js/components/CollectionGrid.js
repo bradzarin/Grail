@@ -28,7 +28,7 @@ export function CollectionGrid(items) {
     const g = GBadge(card.rating);
     if (g) badges.appendChild(g);
     media.appendChild(badges);
-    media.appendChild(CardArt(card));
+    media.appendChild(CardArt(card, item.front_image));
     tile.appendChild(media);
 
     const body = document.createElement("div");

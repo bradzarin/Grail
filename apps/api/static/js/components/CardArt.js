@@ -160,14 +160,38 @@ export function cardArtSVG(card) {
   return isGraded ? slabSVG(card, id) : plainSVG(card, id);
 }
 
-export function CardArt(card) {
-  const wrap = document.createElement("div");
-  wrap.style.width = "100%";
-  wrap.style.height = "100%";
+function renderGenerated(wrap, card) {
   wrap.innerHTML = cardArtSVG(card);
   const svg = wrap.querySelector("svg");
   svg.style.width = "100%";
   svg.style.height = "100%";
   svg.style.display = "block";
+}
+
+// photoUrl: a real photo of this specific owned copy (CARD_INSTANCE.front_image,
+// uploaded via POST /api/collection/{id}/photo — see HANDOFF.md section 12). When
+// present, it's used in place of the generated art; a broken/failed load falls back
+// to the generated card rather than showing a broken image (HANDOFF.md section 14,
+// "Image Reliability"). Catalog-wide views (Grails, Discover, Suggested Pickups)
+// don't have a specific owned copy to photograph, so they always render generated.
+export function CardArt(card, photoUrl) {
+  const wrap = document.createElement("div");
+  wrap.style.width = "100%";
+  wrap.style.height = "100%";
+
+  if (photoUrl) {
+    const img = document.createElement("img");
+    img.src = photoUrl;
+    img.alt = card.title;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+    img.style.display = "block";
+    img.addEventListener("error", () => renderGenerated(wrap, card), { once: true });
+    wrap.appendChild(img);
+    return wrap;
+  }
+
+  renderGenerated(wrap, card);
   return wrap;
 }

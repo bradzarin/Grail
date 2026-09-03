@@ -42,7 +42,7 @@ function renderSide(label, items, selected, onToggle) {
     const thumb = document.createElement("a");
     thumb.className = "thumb";
     thumb.href = `/card.html?id=${encodeURIComponent(item.card.card_id)}`;
-    thumb.appendChild(CardArt(item.card));
+    thumb.appendChild(CardArt(item.card, item.front_image));
     row.appendChild(thumb);
 
     const info = document.createElement("div");

@@ -67,14 +67,29 @@ Open `http://127.0.0.1:8000`.
 
 ## Card art
 
-Every card face is generated SVG (`js/components/CardArt.js`), not a photo — real
-card-manufacturer photography is copyrighted, and this repo has no license for it
-(the handoff itself flags this: "use properly licensed/authorized imagery in
+Every card face is generated SVG (`js/components/CardArt.js`) by default — not a
+downloaded photo. Real card-manufacturer photography, marketplace listing photos, and
+similar are someone else's copyrighted work, and this repo has no license for any of
+that (the handoff itself flags this: "use properly licensed/authorized imagery in
 production," `HANDOFF.md` §14/15). Generation is deterministic from
 `primary_color`/`secondary_color`/`jersey_number`/`player`/`team`, so it's also what
 makes the catalog look like one coherent product instead of mismatched stock photos.
-A production build swaps in licensed photography behind this same component — nothing
-downstream needs to change.
+
+What's clean to use: a real photo of a physical card someone actually owns, that they
+took themselves. `POST /api/collection/{instance_id}/photo` (multipart, `side=front|back`)
+lets an owner upload exactly that for their own `CARD_INSTANCE` — matches
+`HANDOFF.md` §12's data model (`front_image`/`back_image` already specified there).
+Saved to `static/uploads/{instance_id}-{side}.{ext}` (validated content-type, 15MB cap,
+filename never taken from the upload — no path-traversal surface) and referenced with a
+cache-busting query string for the same reason `ASSET_VERSION` exists (see "Asset
+versioning" below — re-uploading under the same filename would otherwise risk a stale
+cached copy). `CardArt(card, photoUrl)` renders that photo in place of the generated
+card when present, everywhere that instance's photo is available (Collection, the Card
+Market Terminal hero, the Trade Table) — and falls back to the generated card if the
+photo ever fails to load, never a broken image. Catalog-wide views with no specific
+owned copy (Grails, Discover, Suggested Pickups) always render generated, since there's
+nothing real to photograph there. The upload control lives on the Card Market Terminal,
+only when the card is owned.
 
 ## API
 
@@ -95,6 +110,9 @@ GET  /api/collection/summary        aggregate value / Grail count / status break
 GET  /api/collection/performance    portfolio value over time, reconstructed from
                                     real sales (the Home portfolio graph)
 GET  /api/collection/breakdown      ?by=sport|player — portfolio grouped by that lens
+POST /api/collection/{id}/photo     upload a real photo of that owned copy
+                                    (multipart, ?side=front|back; see "Card art")
+DELETE /api/collection/{id}/photo   remove it, reverting to generated card art
 GET  /api/discover                  real market movers, personalized to what's owned
 GET  /api/market                    full catalog, ranked by real momentum
 GET  /api/grails                    catalog cards currently carrying a G badge

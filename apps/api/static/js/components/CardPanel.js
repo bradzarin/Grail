@@ -1,3 +1,4 @@
+import { api } from "../api.js";
 import { CardArt } from "./CardArt.js";
 import { GBadge, LiquidityBadge } from "./Badges.js";
 import { GrailEstimatePanel } from "./GrailEstimatePanel.js";
@@ -21,8 +22,68 @@ export function CardPanel(card, trend, owned) {
   const left = document.createElement("div");
   const hero = document.createElement("div");
   hero.className = "terminal-hero";
-  hero.appendChild(CardArt(card));
+  hero.appendChild(CardArt(card, owned?.front_image));
   left.appendChild(hero);
+
+  // Real photo of this specific owned copy (HANDOFF.md section 12,
+  // CARD_INSTANCE.front_image) — only offered when this card is actually
+  // owned, since there's no specific physical copy to photograph otherwise.
+  const photoSlot = document.createElement("div");
+  function renderPhotoRow() {
+    photoSlot.innerHTML = "";
+    if (!owned) return;
+    const row = document.createElement("div");
+    row.className = "photo-upload-row";
+
+    const label = document.createElement("label");
+    label.className = "filter-pill photo-upload-btn";
+    label.textContent = owned.front_image ? "Replace Photo" : "Upload Your Photo";
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp";
+    input.hidden = true;
+    input.addEventListener("change", async () => {
+      const file = input.files[0];
+      if (!file) return;
+      label.textContent = "Uploading…";
+      try {
+        const updated = await api.uploadInstancePhoto(owned.instance_id, "front", file);
+        owned.front_image = updated.front_image;
+        hero.innerHTML = "";
+        hero.appendChild(CardArt(card, owned.front_image));
+        showToast("Photo updated.");
+        renderPhotoRow();
+      } catch (err) {
+        showToast(`Couldn't upload photo — ${err.message}`);
+        label.textContent = owned.front_image ? "Replace Photo" : "Upload Your Photo";
+      }
+    });
+    label.appendChild(input);
+    row.appendChild(label);
+
+    if (owned.front_image) {
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "filter-pill";
+      removeBtn.textContent = "Remove Photo";
+      removeBtn.addEventListener("click", async () => {
+        try {
+          await api.deleteInstancePhoto(owned.instance_id, "front");
+          owned.front_image = null;
+          hero.innerHTML = "";
+          hero.appendChild(CardArt(card, null));
+          showToast("Photo removed — back to generated art.");
+          renderPhotoRow();
+        } catch (err) {
+          showToast(`Couldn't remove photo — ${err.message}`);
+        }
+      });
+      row.appendChild(removeBtn);
+    }
+
+    photoSlot.appendChild(row);
+  }
+  renderPhotoRow();
+  left.appendChild(photoSlot);
 
   const identity = document.createElement("div");
   identity.className = "terminal-identity";

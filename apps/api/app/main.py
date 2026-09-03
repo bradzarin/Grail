@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -83,6 +83,7 @@ class NoCacheStaticFiles(StaticFiles):
 
 app = FastAPI(title="The Grail Market Data API", version="0.3.0", lifespan=lifespan)
 STATIC = Path(__file__).resolve().parents[1] / "static"
+UPLOADS = STATIC / "uploads"
 app.mount("/static", NoCacheStaticFiles(directory=STATIC), name="static")
 
 # Changes every process start, so /assets/{ASSET_VERSION}/js/... is a brand
@@ -159,8 +160,65 @@ def _instance_summary(inst):
         "acquired_price": inst.acquired_price,
         "acquired_date": inst.acquired_date,
         "grade": inst.grade,
+        "front_image": inst.front_image,
+        "back_image": inst.back_image,
         "card": _card_summary(card),
     }
+
+
+def _instance_or_404(instance_id: str) -> CardInstance:
+    for inst in COLLECTION:
+        if inst.instance_id == instance_id:
+            return inst
+    raise HTTPException(404, "Unknown collection instance")
+
+
+PHOTO_EXTENSION_BY_CONTENT_TYPE = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+MAX_PHOTO_BYTES = 15 * 1024 * 1024
+
+
+@app.post("/api/collection/{instance_id}/photo")
+async def upload_instance_photo(instance_id: str, side: str = "front", file: UploadFile = File(...)):
+    """Real photo of this specific physical card, per HANDOFF.md section 12's
+    CARD_INSTANCE.front_image/back_image. Filename is always
+    {instance_id}-{side}, never the uploaded filename, so there's no path-
+    traversal surface from what a browser sends. A query-string cache-bust on
+    the returned URL exists for the same reason the asset-versioning scheme
+    does (see NoCacheStaticFiles/ASSET_VERSION above) — re-uploading a photo
+    under the same filename would otherwise risk a browser serving the old one."""
+    if side not in ("front", "back"):
+        raise HTTPException(422, "side must be 'front' or 'back'")
+    inst = _instance_or_404(instance_id)
+    ext = PHOTO_EXTENSION_BY_CONTENT_TYPE.get(file.content_type)
+    if not ext:
+        raise HTTPException(422, "Only JPEG, PNG, or WebP images are accepted")
+    body = await file.read()
+    if len(body) > MAX_PHOTO_BYTES:
+        raise HTTPException(422, "Image is too large (max 15MB)")
+    UPLOADS.mkdir(parents=True, exist_ok=True)
+    for stale in UPLOADS.glob(f"{instance_id}-{side}.*"):
+        stale.unlink(missing_ok=True)
+    (UPLOADS / f"{instance_id}-{side}.{ext}").write_bytes(body)
+    url = f"/static/uploads/{instance_id}-{side}.{ext}?t={int(time.time())}"
+    if side == "front":
+        inst.front_image = url
+    else:
+        inst.back_image = url
+    return _instance_summary(inst)
+
+
+@app.delete("/api/collection/{instance_id}/photo")
+def delete_instance_photo(instance_id: str, side: str = "front"):
+    if side not in ("front", "back"):
+        raise HTTPException(422, "side must be 'front' or 'back'")
+    inst = _instance_or_404(instance_id)
+    for stale in UPLOADS.glob(f"{instance_id}-{side}.*"):
+        stale.unlink(missing_ok=True)
+    if side == "front":
+        inst.front_image = None
+    else:
+        inst.back_image = None
+    return _instance_summary(inst)
 
 
 def _owned_card_ids():
