@@ -241,10 +241,7 @@ def grail_rating(card, estimate: dict) -> dict:
     significance = float(card.significance_score)
     momentum = _momentum_score(estimate.get("momentum_pct"))
 
-    composite = round(
-        0.25 * value + 0.25 * demand + 0.20 * scarcity + 0.20 * significance + 0.10 * momentum,
-        1,
-    )
+    composite = round(0.25 * value + 0.25 * demand + 0.20 * scarcity + 0.20 * significance + 0.10 * momentum)
 
     if composite >= 90:
         band, band_source = "GRAIL", "composite"
@@ -268,11 +265,11 @@ def grail_rating(card, estimate: dict) -> dict:
         "band": band,
         "band_source": band_source,
         "dimensions": {
-            "value": round(value, 1),
-            "demand": round(demand, 1),
-            "scarcity": round(scarcity, 1),
-            "significance": round(significance, 1),
-            "momentum": round(momentum, 1),
+            "value": round(value),
+            "demand": round(demand),
+            "scarcity": round(scarcity),
+            "significance": round(significance),
+            "momentum": round(momentum),
         },
         "significance_source": card.significance_source,
     }

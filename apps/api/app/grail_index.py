@@ -69,7 +69,7 @@ def _caliber(items: list[dict]) -> tuple[float | None, str]:
         total_w += price
     if total_w <= 0:
         return None, "No cost basis recorded yet to weight this by."
-    return round(weighted / total_w, 1), "Cost-basis-weighted average of every owned card's real G Score."
+    return round(weighted / total_w), "Cost-basis-weighted average of every owned card's real G Score."
 
 
 def _diversification(items: list[dict]) -> tuple[float | None, str]:
@@ -85,7 +85,7 @@ def _diversification(items: list[dict]) -> tuple[float | None, str]:
     hhi_sport, hhi_player = _hhi(sport_w), _hhi(player_w)
     if hhi_sport is None or hhi_player is None:
         return None, "No cost basis recorded yet to measure concentration."
-    score = round((100.0 * (1 - hhi_sport) + 100.0 * (1 - hhi_player)) / 2, 1)
+    score = round((100.0 * (1 - hhi_sport) + 100.0 * (1 - hhi_player)) / 2)
     note = (
         f"Cost basis spread across {len(sport_w)} sport{'s' if len(sport_w) != 1 else ''} "
         f"and {len(player_w)} player{'s' if len(player_w) != 1 else ''} — lower if concentrated "
@@ -105,7 +105,7 @@ def _liquidity(items: list[dict]) -> tuple[float | None, str]:
         total_w += price
     if total_w <= 0:
         return None, "No cost basis recorded yet to weight this by."
-    return round(weighted / total_w, 1), "Cost-basis-weighted real trading activity across your holdings."
+    return round(weighted / total_w), "Cost-basis-weighted real trading activity across your holdings."
 
 
 def _performance(items: list[dict]) -> tuple[float | None, str]:
@@ -125,7 +125,7 @@ def _performance(items: list[dict]) -> tuple[float | None, str]:
     # card's short-term momentum swing, so this needs a wider scale to stay
     # meaningfully differentiated across real portfolios instead of pinning
     # at 100 for anything with a strong quarter.
-    score = round(max(0.0, min(100.0, 50.0 + gain_pct / 4.0)), 1)
+    score = round(max(0.0, min(100.0, 50.0 + gain_pct / 4.0)))
     sign = "+" if gain_pct >= 0 else ""
     return score, f"{sign}{round(gain_pct, 1)}% real return across priced holdings only."
 
@@ -148,7 +148,7 @@ def _depth(items: list[dict], cards: dict, bulk_cards: dict) -> tuple[float | No
         min(1.0, owned_count / universe_by_player.get(player, owned_count))
         for player, owned_count in owned_by_player.items()
     ]
-    score = round(100.0 * sum(ratios) / len(ratios), 1)
+    score = round(100.0 * sum(ratios) / len(ratios))
     note = (
         f"Averaged across the {len(owned_by_player)} player{'s' if len(owned_by_player) != 1 else ''} you collect, "
         f"against every real card of theirs this catalog tracks — owning one of six tracked cards for a player "
@@ -190,7 +190,7 @@ def grail_index(items: list[dict], cards: dict, bulk_cards: dict) -> dict:
     present = {k: v for k, v in dims.items() if v is not None}
     if present:
         total_w = sum(_WEIGHTS[k] for k in present)
-        composite = round(sum(_WEIGHTS[k] * v for k, v in present.items()) / total_w, 1)
+        composite = round(sum(_WEIGHTS[k] * v for k, v in present.items()) / total_w)
     else:
         composite = None
 
